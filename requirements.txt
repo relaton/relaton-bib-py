@@ -1,0 +1,1 @@
+xml-dataclasses==0.0.8
