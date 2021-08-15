@@ -13,9 +13,8 @@ with open('HISTORY.rst') as history_file:
 with open('requirements.txt') as reqs:
     requirements = reqs.read().splitlines()
 
-requirements = ["xml-dataclasses"]
-
-test_requirements = []
+with open('requirements_dev.txt') as reqs:
+    dev_requirements = reqs.read().splitlines()
 
 setup(
     author="Aliaksandr Babrykovich",
@@ -43,7 +42,7 @@ setup(
     name='relaton_bib',
     packages=find_packages(include=['relaton_bib', 'relaton_bib.*']),
     test_suite='tests',
-    tests_require=test_requirements,
+    tests_require=dev_requirements,
     url='https://github.com/relaton/relaton-bib-py',
     version='0.1.0',
     zip_safe=False,
