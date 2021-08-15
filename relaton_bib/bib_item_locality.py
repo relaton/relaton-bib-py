@@ -2,7 +2,7 @@ import re
 import logging
 import xml.etree.ElementTree as ET
 
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 
