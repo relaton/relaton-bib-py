@@ -11,7 +11,7 @@ class BibliographicItemVersion:
 
     def to_xml(self, parent=None):
         name = "version"
-        node = ET.SubElement(parent, name) if parent else ET.Element(name)
+        node = ET.Element(name) if parent is None else ET.SubElement(parent, name)
         if self.revision_date:
             ET.SubElement(node, "revision-date").text = revision_date
         for d in self.draft:

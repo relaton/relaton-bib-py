@@ -1,5 +1,6 @@
 import datetime
 import dataclasses
+import re
 
 
 class RequestError(Exception):
@@ -15,25 +16,26 @@ def parse_date(date, str_res=True):
 
     cases = [
         # February 2012
-        (r"(?<date>\w+\s\d{4})", "%B %Y", "%Y-%m"),
+        (r"(?P<date>\w+\s\d{4})", "%B %Y", "%Y-%m"),
         # February 11, 2012
-        (r"(?<date>\w+\s\d{1,2},\s\d{4})", "%B %d, %Y", "%Y-%m-%d"),
+        (r"(?P<date>\w+\s\d{1,2},\s\d{4})", "%B %d, %Y", "%Y-%m-%d"),
         # 2012-02-11
-        (r"(?<date>\d{4}-\d{2}-\d{2})", "%Y-%m-%d", None),
+        (r"(?P<date>\d{4}-\d{2}-\d{2})", "%Y-%m-%d", None),
         # 2012-02
-        (r"(?<date>\d{4}-\d{2})", "%Y-%m", None),
+        (r"(?P<date>\d{4}-\d{2})", "%Y-%m", None),
         # 2012
-        (r"(?<date>\d{4})", "%Y", None),
+        (r"(?P<date>\d{4})", "%Y", None),
     ]
 
     for regexp, strp, strf in cases:
-        m = re.match(regexp, str(date)).group("date")
+        m = re.match(regexp, str(date))
         if m:
-            d = datetime.strptime(m, strp)
+            value = m.group("date")
+            d = datetime.datetime.strptime(value, strp)
             if strf:
                 return d.strftime(strf) if str_res else d
             else:
-                return m if str_res else d.strptime(strp)
+                return value if str_res else d.strftime(strp)
 
 
 # @param array [Array]

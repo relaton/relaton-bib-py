@@ -42,6 +42,15 @@ def test_invalid_locality_type(caplog):
     assert f"[relaton-bib] invalid locality type: {invalid}" in caplog.text
 
 
+def test_custom_locality_type(caplog):
+    custom = "locality:custom"
+
+    with caplog.at_level(logging.WARNING):
+        BibItemLocality(type=custom, reference_from="from")
+
+    assert f"[relaton-bib] invalid locality type: {custom}" not in caplog.text
+
+
 def test_to_asciibib_all_props():
     bib_item = BibItemLocality(
         type=BibItemLocalityType.SECTION.value,

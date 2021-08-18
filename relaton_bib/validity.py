@@ -1,10 +1,9 @@
 import datetime
+import typing
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
-from typing import ClassVar  # https://stackoverflow.com/q/59904631/902217
 
 
-@xml_dataclass
 @dataclass(frozen=True)
 class Validity:
     FORMAT: typing.ClassVar[str] = "%Y-%m-%d %H:%M"

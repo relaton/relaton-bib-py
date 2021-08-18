@@ -11,7 +11,9 @@ class BiblioNote(FormattedString):
     type: Optional[str] = None
 
     def to_xml(self, parent=None):
-        node = ET.SubElement(parent, "note") if parent else ET.Element("node")
+        name = "node"
+        node = ET.Element("node")if parent is None \
+            else ET.SubElement(parent, name)
         super(node)
         if self.type:
             node.attrib["type"] = self.type
