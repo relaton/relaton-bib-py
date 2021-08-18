@@ -26,8 +26,8 @@ class TypedUri:
         count -- number of links
         """
         pref = f"{prefix}.link" if prefix else "link"
-        out = f"{pref}::\n" if count > 1 ""
+        out = [f"{pref}::"] if count > 1 else []
         if self.type:
-            out += f"{pref}.type:: {type}\n"
-        out += f"{pref}.content:: {content}\n"
-        out
+            out.append(f"{pref}.type:: {self.type}")
+        out.append(f"{pref}.content:: {self.content}")
+        return "\n".join(out)
