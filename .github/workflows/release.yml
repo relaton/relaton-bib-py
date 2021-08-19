@@ -24,7 +24,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements_dev.txt
 
-    - run: python3 setup.py install
+    - run: python3 -m build
 
     - uses: pypa/gh-action-pypi-publish@release/v1
       with:
