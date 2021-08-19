@@ -44,6 +44,6 @@ setup(
     test_suite='tests',
     tests_require=dev_requirements,
     url='https://github.com/relaton/relaton-bib-py',
-    version='0.1.0a1',
+    version='0.1.0a2',
     zip_safe=False,
 )
