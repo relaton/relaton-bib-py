@@ -58,7 +58,7 @@ class BibliographicDate:
 
     def to_xml(self, parent, opts={}):
         name = "date"
-        result = ET.SubElement(parent, name) if parent else ET.Element(name)
+        result = ET.Element(name) if parent is None else ET.SubElement(parent, name)
         result.attrib["type"] = self.type
         date_format = opts.get("date_format")
         no_year = opts.get("no_year")

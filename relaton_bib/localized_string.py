@@ -1,103 +1,99 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from typing import Union
+
+import xml.etree.ElementTree as ET
+
 
 @dataclass(frozen=True)
 class LocalizedString:
+    content: Union[str, list[LocalizedString]]
+    language: list[str] = None
+    script: list[str] = None
 
+    def __post_init__(self):
+        inv = None
+        if isinstance(self.content, list[LocalizedString]):
+            def reject(x): return not isinstance(x, (LocalizedString, dict))
+            inv = list(filter(reject, self.content))
 
-# frozen_string_literal: true
+        if not (isinstance(self.content, str)
+                or len(inv) == 0 and any(self.content)):
+            klass = type(inv[0]) if isinstance(self.content, list) \
+                                 else type(self.content)
+            raise ValueError(f"invalid LocalizedString content type: {klass}")
 
-module RelatonBib
-  # Localized string.
-  class LocalizedString
-    include RelatonBib
+        if isinstance(self.language, str):
+            self.language = [self.language]
 
-    # @return [Array<String>] language Iso639 code
-    attr_reader :language
+        if isinstance(self.script, str):
+            self.script = [self.script]
 
-    # @return [Array<String>] script Iso15924 code
-    attr_reader :script
+        if isinstance(self.content, list):
+            def dict_to_loc_str(c):
+                if isinstance(c, dict):
+                    return LocalizedString(c.get("content"),
+                                           c.get("language"),
+                                           c.get("script"))
+                else:
+                    return c
 
-    # @return [String, Array<RelatonBib::LocalizedString>]
-    attr_accessor :content
+            self.content = map(dict_to_loc_str, self.content)
 
-    # @param content [String, Array<RelatonBib::LocalizedString>]
-    # @param language [String] language code Iso639
-    # @param script [String] script code Iso15924
-    def initialize(content, language = nil, script = nil) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
-      if content.is_a? Array
-        inv = content.reject { |c| c.is_a?(LocalizedString) || c.is_a?(Hash) }
-      end
-      unless content.is_a?(String) || inv&.none? && content.any?
-        klass = content.is_a?(Array) ? inv.first.class : content.class
-        raise ArgumentError, "invalid LocalizedString content type: #{klass}"
-      end
-      @language = language.is_a?(String) ? [language] : language
-      @script = script.is_a?(String) ? [script] : script
-      @content = if content.is_a?(Array)
-                   content.map do |c|
-                     if c.is_a?(Hash)
-                       LocalizedString.new c[:content], c[:language], c[:script]
-                     else c
-                     end
-                   end
-                 else content
-                 end
-    end
+    def __str__(self):
+        return self.content if isinstance(self.content, str) \
+                            else str(self.content[0] if self.content else None)
 
-    # @return [String]
-    def to_s
-      content.is_a?(String) ? content : content.first.to_s
-    end
+    def __len__(self):
+        return len(self.content)
 
-    # @return [TrueClass, FalseClass]
-    def empty?
-      content.empty?
-    end
+    def empty(self):
+        return len(self) == 0
 
-    # @param builder [Nokogiri::XML::Builder]
-    def to_xml(builder) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
-      return unless content
+    def to_xml(self, parent):
+        if not self.content:
+            return
 
-      if content.is_a?(Array)
-        content.each { |c| builder.variant { c.to_xml builder } }
-      else
-        builder.parent["language"] = language.join(",") if language&.any?
-        builder.parent["script"]   = script.join(",") if script&.any?
-        builder.text content.encode(xml: :text)
-      end
-    end
+        if isinstance(self.content, list):
+            for c in self.content:
+                c.to_xml(ET.SubElement(parent, "variant"))
+        else:
+            if any(self.language):
+                parent.attrib["language"] = ",".join(filter(None, self.language))
+            if any(self.script):
+                parent.attrib["script"] = ",".join(filter(None, self.script))
 
-    # @return [Hash]
-    def to_hash # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
-      if content.is_a? String
-        return content unless language || script
+            parent.text = self.content
 
-        hash = { "content" => content }
-        hash["language"] = single_element_array(language) if language&.any?
-        hash["script"] = single_element_array(script) if script&.any?
-        hash
-      else content.map &:to_hash
-      end
-    end
+        return parent
 
-    # @param prefix [String]
-    # @param count [Integer] number of elements
-    # @return [String]
-    def to_asciibib(prefix = "", count = 1, has_attrs = false) # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity,Metrics/MethodLength
-      pref = prefix.empty? ? prefix : prefix + "."
-      if content.is_a? String
-        unless language&.any? || script&.any? || has_attrs
-          return "#{prefix}:: #{content}\n"
-        end
+    # TODO revisit
+    # def to_hash # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
+    #   if content.is_a? String
+    #     return content unless language || script
 
-        out = count > 1 ? "#{prefix}::\n" : ""
-        out += "#{pref}content:: #{content}\n"
-        language&.each { |l| out += "#{pref}language:: #{l}\n" }
-        script&.each { |s| out += "#{pref}script:: #{s}\n" }
-        out
-      else
-        content.map { |c| c.to_asciibib "#{pref}variant", content.size }.join
-      end
-    end
-  end
-end
+    #     hash = { "content" => content }
+    #     hash["language"] = single_element_array(language) if language&.any?
+    #     hash["script"] = single_element_array(script) if script&.any?
+    #     hash
+    #   else content.map &:to_hash
+    #   end
+    # end
+
+    def to_asciibib(self, prefix="", count=1, has_attrs=False):
+        pref = f"{prefix}." if prefix else prefix
+
+        if isinstance(self.content, list):
+            return "".join(map(
+                lambda c: c.to_asciibib(f"{pref}variant", len(self.content)),
+                self.content))
+        else:
+            if not (any(self.language) or any(self.script) or has_attrs):
+                return f"{prefix}:: {content}\n"
+
+            out = [f"{prefix}::"] if count > 1 else []
+            out.append(f"{pref}content:: {content}")
+            for lang in self.language:
+                out.append(f"{pref}language:: {lang}")
+            for script in self.script:
+                out.append(f"{pref}script:: {script}")
+            return "\n".join(out)

@@ -2,7 +2,6 @@ from dataclasses import dataclass, field
 import xml.etree.ElementTree as ET
 
 
-@xml_dataclass
 @dataclass(frozen=True)
 class WorkGroup:
     content: str
@@ -11,14 +10,14 @@ class WorkGroup:
 
     # to_hash -> dataclasses.asdict
 
-    def to_xml(parent):
+    def to_xml(self, parent):
         parent.text = self.content
         if self.number:
             parent.attrib["number"] = self.number
         if self.type:
             parent.attrib["type"] = self.type
 
-    def to_asciibib(prefix=""):
+    def to_asciibib(self, prefix=""):
         """Return AsciiBib representation
 
         Keyword arguments:

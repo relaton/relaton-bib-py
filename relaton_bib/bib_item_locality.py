@@ -83,7 +83,7 @@ class LocalityStack:
 
     def to_xml(self, parent):
         node = ET.SubElement(parent, "localityStack")
-        for loc in locality:
+        for loc in self.locality:
             loc.to_xml(node)
         return node
 
