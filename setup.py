@@ -4,6 +4,11 @@
 
 from setuptools import setup, find_packages
 
+
+def empty_or_comment(x):
+    return len(x) == 0 or x.strip().startswith("#")
+
+
 with open('README.rst') as readme_file:
     readme = readme_file.read()
 
@@ -11,10 +16,10 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
 with open('requirements.txt') as reqs:
-    requirements = reqs.read().splitlines()
+    requirements = filter(empty_or_comment, reqs.read().splitlines())
 
 with open('requirements_dev.txt') as reqs:
-    dev_requirements = reqs.read().splitlines()
+    dev_requirements = filter(empty_or_comment, reqs.read().splitlines())
 
 setup(
     author="Aliaksandr Babrykovich",
