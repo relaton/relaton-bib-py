@@ -64,6 +64,16 @@ Test framework
 
 https://www.pythonpool.com/python-unittest-vs-pytest/
 
+No need for the coding comment anymore
+--------------------------------------
+
+https://stackoverflow.com/questions/14083111/should-i-use-encoding-declaration-in-python-3
+
+Circular dependency between types
+---------------------------------
+
+https://stackoverflow.com/questions/52676647/how-to-define-circularly-dependent-data-classes-in-python-3-7
+
 Credits
 -------
 
