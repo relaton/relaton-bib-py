@@ -1,4 +1,9 @@
+import datetime
+import typing
+
 from dataclasses import dataclass
+
+import xml.etree.ElementTree as ET
 
 
 @dataclass(frozen=True)  # FIXME missing content=(url)
@@ -8,9 +13,10 @@ class TypedUri:
 
     # to_hash -> dataclasses.asdict
 
-    def to_xml(parent=None):
+    def to_xml(self, parent=None):
         name = "uri"
-        node = ET.SubElement(parent, name) if parent else ET.Element(name)
+        node = ET.Element(name) if parent is None \
+            else ET.SubElement(parent, name)
         node.text = self.content
 
         if self.type:
@@ -18,7 +24,7 @@ class TypedUri:
 
         return node
 
-    def to_asciibib(prefix="", count=1):
+    def to_asciibib(self, prefix="", count=1):
         """Return AsciiBib representation
 
         Keyword arguments:

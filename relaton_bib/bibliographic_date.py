@@ -1,5 +1,6 @@
 import re
 import datetime
+import logging
 import xml.etree.ElementTree as ET
 
 from dataclasses import dataclass
@@ -42,7 +43,8 @@ class BibliographicDate:
 
     def __post_init__(self):
         if not BibliographicDateType.has_value(self.type):
-            logging.warning(f"[relaton-bib] invalid bibliographic date type: {self.type}")
+            logging.warning(
+                f"[relaton-bib] invalid bibliographic date type: {self.type}")
 
         if not (self.on or self.from_):
             raise ValueError("expected on or from_ argument")
@@ -58,20 +60,21 @@ class BibliographicDate:
 
     def to_xml(self, parent, opts={}):
         name = "date"
-        result = ET.Element(name) if parent is None else ET.SubElement(parent, name)
+        result = ET.Element(name) if parent is None \
+            else ET.SubElement(parent, name)
         result.attrib["type"] = self.type
         date_format = opts.get("date_format")
         no_year = opts.get("no_year")
         if self.on:
             on_node = ET.SubElement(result, "on")
             if no_year:
-                on_node.text = NO_YEAR
+                on_node.text = self.NO_YEAR
             else:
                 on_node.text = self._date_format(self.on, date_format)
         elif self.from_:
             form_node = ET.SubElement(result, "from")
             if no_year:
-                form_node.text = NO_YEAR
+                form_node.text = self.NO_YEAR
             else:
                 form_node.text = self._date_format(self.from_, date_format)
                 if self.to:
@@ -90,7 +93,7 @@ class BibliographicDate:
             out.append(f"{pref}date.from:: {self.from_}")
         if self.to:
             out.append(f"{pref}date.to:: #{self.to}")
-        return "\n".join(out)
+        return "\n".join(out + [""])
 
     # TODO make properties readable for on, from_, to
 

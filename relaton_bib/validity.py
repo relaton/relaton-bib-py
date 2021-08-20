@@ -1,6 +1,8 @@
 import datetime
 import typing
+
 import xml.etree.ElementTree as ET
+
 from dataclasses import dataclass
 
 
@@ -14,33 +16,35 @@ class Validity:
 
     # to_hash -> dataclasses.asdict TODO original convert datetime -> str
 
-    def to_xml(parent):
+    def to_xml(self, parent):
         name = "validity"
-        node = ET.SubElement(parent, name) if parent else ET.Element(name)
+        node = ET.Element(name) if parent is None \
+            else ET.SubElement(parent, name)
 
         if self.begins:
-            node.attrib["validityBegins"] = begins.strftime(FORMAT)
+            node.attrib["validityBegins"] = self.begins.strftime(self.FORMAT)
         if self.ends:
-            node.attrib["validityEnds"] = ends.strftime(FORMAT)
+            node.attrib["validityEnds"] = self.ends.strftime(self.FORMAT)
         if self.revision:
-            node.attrib["revision"] = revision.strftime(FORMAT)
+            node.attrib["revision"] = self.revision.strftime(self.FORMAT)
 
         return node
 
     # @param prefix [String]
     # @return [String]
-    def to_asciibib(prefix=""):
+    def to_asciibib(self, prefix=""):
         """Return AsciiBib representation
 
         Keyword arguments:
         prefix -- AsciiBib prefix
         """
         pref = f"{prefix}.validity." if prefix else "validity."
-        out = ""
-        if begins:
-            out += f"{pref}begins:: {begins.strftime(FORMAT)}\n"
-        if ends:
-            out += f"{pref}ends:: {ends.strftime(FORMAT)}\n"
-        if revision:
-            out += f"{pref}revision:: {revision.strftime(FORMAT)}\n"
-        return out
+        out = []
+        if self.begins:
+            out.append(f"{pref}begins:: {self.begins.strftime(self.FORMAT)}")
+        if self.ends:
+            out.append(f"{pref}ends:: {self.ends.strftime(self.FORMAT)}")
+        if self.revision:
+            out.append(
+                f"{pref}revision:: {self.revision.strftime(self.FORMAT)}")
+        return "\n".join(out)

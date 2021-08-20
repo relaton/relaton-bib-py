@@ -38,6 +38,7 @@ def parse_date(date, str_res=True):
                 return value if str_res else d.strftime(strp)
 
 
+# TODO we don't need this for python probably
 # @param array [Array]
 # @return [Array<String>, String]
 def single_element_array(array):

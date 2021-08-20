@@ -1,11 +1,10 @@
-from dataclasses import dataclass, field
-import xml.etree.ElementTree as ET
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
 class WorkGroup:
     content: str
-    number: int = field(None)
+    number: int = None
     type: str = None
 
     # to_hash -> dataclasses.asdict
