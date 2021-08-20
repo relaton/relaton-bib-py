@@ -26,7 +26,7 @@ jobs:
 
     - run: python3 -m build
 
-    - uses: pypa/gh-action-pypi-publish@release/v1
+      uses: pypa/gh-action-pypi-publish@release/v1.4
       with:
         user: __token__
         password: ${{ secrets.RIBOSE_PYPI_API_TOKEN }}
