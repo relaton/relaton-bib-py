@@ -71,8 +71,6 @@ def test_to_asciibib_only_required_props():
 
     result = bib_item.to_asciibib(count=2)
 
-    print(result)
-
     assert result == inspect.cleandoc("""::
                                       type:: section
                                       reference_from:: from""")

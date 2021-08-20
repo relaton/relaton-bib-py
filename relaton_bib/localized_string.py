@@ -1,32 +1,36 @@
-from dataclasses import dataclass
+from __future__ import annotations
+from dataclasses import dataclass, field
 from typing import Union
 
+import xml.sax.saxutils as saxutils
 import xml.etree.ElementTree as ET
 
 
 @dataclass(frozen=True)
 class LocalizedString:
     content: Union[str, list[LocalizedString]]
-    language: list[str] = None
-    script: list[str] = None
+    language: list[str] = field(default_factory=list)
+    script: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         inv = None
-        if isinstance(self.content, list[LocalizedString]):
+        if isinstance(self.content, list):
             def reject(x): return not isinstance(x, (LocalizedString, dict))
             inv = list(filter(reject, self.content))
 
         if not (isinstance(self.content, str)
-                or len(inv) == 0 and any(self.content)):
+                or inv and any(self.content)):
             klass = type(inv[0]) if isinstance(self.content, list) \
                                  else type(self.content)
+            klass = klass.__name__
             raise ValueError(f"invalid LocalizedString content type: {klass}")
 
+        # modify froozen dataclass https://stackoverflow.com/a/54119384/902217
         if isinstance(self.language, str):
-            self.language = [self.language]
+            object.__setattr__(self, "language", [self.language])
 
         if isinstance(self.script, str):
-            self.script = [self.script]
+            object.__setattr__(self, "script", [self.script])
 
         if isinstance(self.content, list):
             def dict_to_loc_str(c):
@@ -37,7 +41,8 @@ class LocalizedString:
                 else:
                     return c
 
-            self.content = map(dict_to_loc_str, self.content)
+            object.__setattr__(self, "content",
+                               map(dict_to_loc_str, self.content))
 
     def __str__(self):
         return self.content if isinstance(self.content, str) \
@@ -49,25 +54,25 @@ class LocalizedString:
     def empty(self):
         return len(self) == 0
 
-    def to_xml(self, parent):
+    def to_xml(self, node):
         if not self.content:
             return
 
         if isinstance(self.content, list):
             for c in self.content:
-                c.to_xml(ET.SubElement(parent, "variant"))
+                c.to_xml(ET.SubElement(node, "variant"))
         else:
             if any(self.language):
-                parent.attrib["language"] = ",".join(filter(None, self.language))
+                node.attrib["language"] = ",".join(filter(None, self.language))
             if any(self.script):
-                parent.attrib["script"] = ",".join(filter(None, self.script))
+                node.attrib["script"] = ",".join(filter(None, self.script))
+            # TODO do we really need double encoding for content
+            node.text = saxutils.escape(self.content)
 
-            parent.text = self.content
-
-        return parent
+        return node
 
     # TODO revisit
-    # def to_hash # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
+    # def to_hash
     #   if content.is_a? String
     #     return content unless language || script
 
@@ -88,10 +93,10 @@ class LocalizedString:
                 self.content))
         else:
             if not (any(self.language) or any(self.script) or has_attrs):
-                return f"{prefix}:: {content}\n"
+                return f"{prefix}:: {self.content}\n"
 
             out = [f"{prefix}::"] if count > 1 else []
-            out.append(f"{pref}content:: {content}")
+            out.append(f"{pref}content:: {self.content}")
             for lang in self.language:
                 out.append(f"{pref}language:: {lang}")
             for script in self.script:

@@ -46,3 +46,10 @@ Circular dependency between types
 ---------------------------------
 
 https://stackoverflow.com/questions/52676647/how-to-define-circularly-dependent-data-classes-in-python-3-7
+
+Wheel package vs EGG package for publishing
+-------------------------------------------
+
+https://packaging.python.org/discussions/wheel-vs-egg/
+
+[????] Open question how to simplify imports

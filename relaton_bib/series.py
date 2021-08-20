@@ -2,10 +2,11 @@ import logging
 from enum import Enum
 from typing import Optional
 import xml.etree.ElementTree as ET
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
-from .dataclasses.metadata import TargetNodeParent, TargetNodeNew, \
-                                  TargetElementAttrib
+from .formatted_string import FormattedString
+from .formatted_ref import FormattedRef
+from .localized_string import LocalizedString
 
 
 class SeriesType(Enum):
@@ -19,11 +20,7 @@ class SeriesType(Enum):
 
 @dataclass(frozen=True)
 class Series:
-    class Meta:
-        name = "series"
-        entry = TargetNodeNew
-
-    type: Optional[str] = field(metadata=dict([TargetElementAttrib]))
+    type: Optional[str]
     formattedref: Optional[FormattedRef]
     title: Optional[FormattedString]
     place: Optional[str]
@@ -43,9 +40,9 @@ class Series:
 
     # to_hash -> dataclasses.asdict
 
-    def to_xml(parent):
-        name = Meta.name
-        node = ET.SubElement(parent, name) if parent else ET.Element(name)
+    def to_xml(self, parent):
+        name = "series"
+        node = ET.Element(name) if parent is None else ET.SubElement(parent, name)
 
         if self.formattedref:
             self.formattedref.to_xml(node)

@@ -11,18 +11,19 @@ class BibliographicItemVersion:
 
     def to_xml(self, parent=None):
         name = "version"
-        node = ET.Element(name) if parent is None else ET.SubElement(parent, name)
+        node = ET.Element(name) if parent is None \
+            else ET.SubElement(parent, name)
         if self.revision_date:
-            ET.SubElement(node, "revision-date").text = revision_date
+            ET.SubElement(node, "revision-date").text = self.revision_date
         for d in self.draft:
             ET.SubElement(node, "draft").text = d
         return node
 
-    def to_asciibib(prefix=""):
+    def to_asciibib(self, prefix=""):
         pref = prefix if prefix else f"{prefix}."
         out = []
         if self.revision_date:
-            out.append(f"{pref}version.revision_date:: {revision_date}")
+            out.append(f"{pref}version.revision_date:: {self.revision_date}")
         for d in self.draft:
             out.append(f"{pref}version.draft:: {d}")
         return "\n".join(out)
