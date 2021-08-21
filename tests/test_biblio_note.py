@@ -49,6 +49,14 @@ def test_note_collecion_to_xml(bibnote_collection):
 
     assert len(host.findall("./node")) == 1
     assert host.find("./node").text == "content1"
+    assert host.find("./node").attrib["language"] == "en"
+
+
+def test_note_collecion_to_xml_lang_not_found(bibnote_collection):
+    host = ET.Element("host")
+    result = bibnote_collection.to_xml(host, {"lang": "xx"})
+
+    assert len(host.findall("./node")) == 2
 
 
 def test_note_collecion_hash(bibnote_collection):

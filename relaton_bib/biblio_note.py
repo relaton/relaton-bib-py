@@ -55,12 +55,13 @@ class BiblioNoteCollection(Forwardable):
         return any(x for x in self.array)
 
     def to_xml(self, parent, opts={}):
-        bnc = filter(lambda bn: opts.get("lang") in bn.language, self.array)
-        if not self.any():
+        lang = opts.get("lang")
+        bnc = list(filter(lambda bn: lang in bn.language, self.array))
+        if not bnc:
             bnc = self.array
         [bn.to_xml(parent) for bn in bnc]
         return parent
 
     # TODO missing to_asciibib?
     # def to_asciibib(self, prefix="", count=1):
-    #   pass
+    #   return "\n".join(map(lambda bn: bn.to_asciibib(prefix, count), self.array))
