@@ -1,13 +1,13 @@
 import xml.etree.ElementTree as ET
 
-from dataclasses import dataclass
-from typing import Optional
+from dataclasses import dataclass, field
+from typing import Optional, List
 
 
 @dataclass
 class BibliographicItemVersion:
     revision_date: Optional[str] = None
-    draft: list[str] = []
+    draft: List[str] = field(default_factory=list)
 
     def to_xml(self, parent=None):
         name = "version"
@@ -20,7 +20,7 @@ class BibliographicItemVersion:
         return node
 
     def to_asciibib(self, prefix=""):
-        pref = prefix if prefix else f"{prefix}."
+        pref = f"{prefix}." if prefix else prefix
         out = []
         if self.revision_date:
             out.append(f"{pref}version.revision_date:: {self.revision_date}")
