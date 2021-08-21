@@ -21,6 +21,13 @@ def test_to_xml(subject):
 
 
 def test_to_asciibib(subject):
+    result = subject.to_asciibib()
+
+    assert result == inspect.cleandoc("""classification.type:: type
+                                         classification.value:: value""")
+
+
+def test_to_asciibib_with_pref(subject):
     result = subject.to_asciibib(prefix="test")
 
     assert result == inspect.cleandoc("""test.classification.type:: type

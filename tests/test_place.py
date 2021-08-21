@@ -27,6 +27,13 @@ def test_to_asciibib(subject):
                                          place.region:: FR""")
 
 
+def test_to_asciibib_with_pref(subject):
+    result = subject.to_asciibib("m")
+
+    assert result == inspect.cleandoc("""m.place.name:: name
+                                         m.place.region:: FR""")
+
+
 def test_hash(subject):
     result = dataclasses.asdict(subject)
 

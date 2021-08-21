@@ -41,7 +41,7 @@ def test_to_asciibib(subject):
                                          medium.scale:: scale""")
 
 
-def test_to_asciibib_with_prefix(subject):
+def test_to_asciibib_with_pref(subject):
     result = subject.to_asciibib("p")
 
     assert result == inspect.cleandoc("""p.medium.form:: form
