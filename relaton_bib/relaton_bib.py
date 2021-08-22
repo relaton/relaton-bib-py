@@ -46,3 +46,8 @@ def single_element_array(array):
         return map(lambda x: x if x is str else dataclasses.asdict(x), array)
     else:
         return array[0] if array[0] is str else dataclasses.asdict(array[0])
+
+
+def lang_filter(target, opts={}):
+    filtered = list(filter(lambda t: opts.get("lang") in t.language, target))
+    return filtered if filtered else target

@@ -2,6 +2,11 @@
 Implementation notes
 ====================
 
+Analyze before conversion
+-------------------------
+
+https://github.com/emad-elsaid/rubrowser - awesome tool
+
 Approaches for automated ruby to python translation
 ---------------------------------------------------
 
