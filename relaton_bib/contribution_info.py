@@ -7,7 +7,7 @@ import logging
 import xml.etree.ElementTree as ET
 
 from .formatted_string import FormattedString
-from .relaton_bib import lang_filter
+from .relaton_bib import lang_filter, to_ds_instance
 if TYPE_CHECKING:
     from .organization import Organization
     from .person import Person
@@ -71,9 +71,7 @@ class ContributionInfo:
 
     def __post_init__(self):
         if self.role:
-            self.role = map(
-                lambda r: ContributorRole(**r) if isinstance(r, dict) else r,
-                self.role)
+            self.role = list(map(to_ds_instance(ContributorRole), self.role))
         else:
             role_type = ContributorRoleType.AUTHOR \
                 if isinstance(self.entity, Person) \
@@ -81,10 +79,11 @@ class ContributionInfo:
             self.role.append(ContributorRole(type=role_type.value))
 
     def to_xml(self, parent, opts={}):
+        # NOTE role don't marshaled to XML as in original ruby code
         return self.entity.to_xml(parent, opts)
 
     def to_asciibib(self, prefix="", count=1):
-        pref = prefix.split(".").first
+        pref = (prefix.split(".") + [None])[0]
         out = [f"{pref}::"] if count > 1 else []
         out.append(self.entity.to_asciibib(prefix))
         for r in self.role:

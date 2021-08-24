@@ -9,9 +9,8 @@ import xml.etree.ElementTree as ET
 
 from .localized_string import LocalizedString
 from .formatted_string import FormattedString
-from .relaton_bib import lang_filter
-if TYPE_CHECKING:
-    from .contributor import Address, Contact, Contributor
+from .relaton_bib import lang_filter, localized_string
+from .contributor import Contributor
 
 
 class OrgIdentifierType(Enum):
@@ -45,32 +44,27 @@ class OrgIdentifier:
         return "\n".join(out)
 
 
-@dataclass(frozen=True)
+@dataclass
 class Organization(Contributor):
-    name: List[LocalizedString]
+    name: List[LocalizedString] = field(default_factory=list)
     abbreviation: LocalizedString = None
-    subdivision: List[LocalizedString] = field(default_factory=List)
-    identifier: List[OrgIdentifier] = field(default_factory=List)
-    contact: List[Union[Address, Contact]] = field(default_factory=List)
+    subdivision: List[LocalizedString] = field(default_factory=list)
+    identifier: List[OrgIdentifier] = field(default_factory=list)
 
-    # TODO revisit later
-    # def initialize(**args)
-    #   raise ArgumentError, "missing keyword: name" unless args[:name]
+    def __post_init__(self):
+        if not self.name:
+            raise ValueError("missing name")
 
-    #   super(url: args[:url], contact: args.fetch(:contact, []))
+        if isinstance(self.name, str):
+            self.name = [LocalizedString(self.name)]
+        elif isinstance(self.name, List):
+            self.name = map(localized_string, self.name)
 
-    #   @name = if args[:name].is_a?(Array)
-    #             args[:name].map { |n| localized_string(n) }
-    #           else
-    #             [localized_string(args[:name])]
-    #           end
+        if isinstance(self.abbreviation, str):
+            self.abbreviation = LocalizedString(self.name)
 
-    #   @abbreviation = localized_string args[:abbreviation]
-    #   @subdivision  = (args[:subdivision] || []).map do |sd|
-    #     localized_string sd
-    #   end
-    #   @identifier   = args.fetch(:identifier, [])
-    # end
+        if isinstance(self.subdivision, List):
+            self.subdivision = map(localized_string, self.subdivision)
 
     def to_xml(self, parent, opts={}):
         name = "organization"
@@ -90,28 +84,31 @@ class Organization(Contributor):
         return result
 
     def to_asciibib(self, prefix="", count=1):
-        pref = re.sub(r"\*$", "organization", prefix)
-        out = [f"{pref}::"] if count > 1 else []
+        prefix = re.sub(r"\*$", "organization", prefix)
+        pref = f"{prefix}." if prefix else prefix
+        out = [f"{prefix}::"] if count > 1 else []
         for n in self.name:
-            out.append(n.to_asciibib(f"{pref}.name", len(self.name)))
+            out.append(n.to_asciibib(f"{pref}name", len(self.name)))
         if self.abbreviation:
-            out.append(self.abbreviation.to_asciibib(f"{pref}.abbreviation"))
+            out.append(self.abbreviation.to_asciibib(f"{pref}abbreviation"))
         for sd in self.subdivision:
             if len(self.subdivision) > 1:
                 # TODO originally it was without \n
-                out.append(f"{pref}.subdivision::")
-            out.append(sd.to_asciibib(f"{pref}.subdivision"))
+                out.append(f"{pref}subdivision::")
+            out.append(sd.to_asciibib(f"{pref}subdivision"))
         for idtfr in self.identifier:
-            out.append(n.to_asciibib(pref, len(self.identifier)))
-        out.append(super().to_asciibib(pref))
+            out.append(n.to_asciibib(prefix, len(self.identifier)))
+        parent = super().to_asciibib(prefix)
+        if parent:
+            out.append()
         return "\n".join(out)
 
 
 @dataclass
 class Affiliation:
+    organization: Organization
     name: LocalizedString = None
     description: List[FormattedString] = None
-    organization: Organization
 
     def to_xml(self, parent, opts={}):
         name = "affiliation"

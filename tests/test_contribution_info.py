@@ -1,12 +1,15 @@
+from __future__ import annotations
 import dataclasses
 import logging
 import inspect
 import pytest
 
+
 import xml.etree.ElementTree as ET
 
 from relaton_bib.formatted_string import FormattedString
 from relaton_bib.contribution_info import ContributorRole, ContributionInfo
+from relaton_bib.organization import Organization
 
 
 @pytest.fixture
@@ -20,7 +23,9 @@ def role():
 
 @pytest.fixture
 def info(role):
-    return ContributionInfo(role=[role], entity=None)
+    return ContributionInfo(
+        role=[role],
+        entity=Organization(name="test"))
 
 
 def test_role_invalid_type(caplog):
@@ -84,15 +89,15 @@ def test_info_to_xml(info):
     host = ET.Element("host")
     result = info.to_xml(host)
 
-    assert result.attrib["type"] == "type"
-    assert len(host.findall("./role/description")) == 3
+    assert host.find("./organization/name").text == "test"
 
 
 def test_info_to_asciibib(info):
     result = info.to_asciibib()
 
     assert result == inspect.cleandoc(
-        """role.description::
+        """name:: test
+           role.description::
            role.description.content:: first
            role.description.format:: text/plain
            role.description::
@@ -108,7 +113,8 @@ def test_info_to_asciibib_with_pref(info):
     result = info.to_asciibib(prefix="test")
 
     assert result == inspect.cleandoc(
-        """test.role.description::
+        """test.name:: test
+           test.role.description::
            test.role.description.content:: first
            test.role.description.format:: text/plain
            test.role.description::
@@ -123,5 +129,5 @@ def test_info_to_asciibib_with_pref(info):
 def test_info_hash(info):
     result = dataclasses.asdict(info)
 
-    assert result["type"] == "type"
-    assert len(result["description"]) == 3
+    assert result["entity"]["name"][0]["content"] == "test"
+    assert len(result["role"][0]["description"]) == 3

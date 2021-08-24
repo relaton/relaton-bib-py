@@ -2,6 +2,8 @@ import datetime
 import dataclasses
 import re
 
+from .localized_string import LocalizedString
+
 
 class RequestError(Exception):
     pass
@@ -51,3 +53,27 @@ def single_element_array(array):
 def lang_filter(target, opts={}):
     filtered = list(filter(lambda t: opts.get("lang") in t.language, target))
     return filtered if filtered else target
+
+
+def localized_string(s):
+    if isinstance(s, dict):
+        return LocalizedString(**s)
+    elif isinstance(s, str):
+        return LocalizedString(s)
+    elif isinstance(s, LocalizedString):
+        return s
+    else:
+        ValueError(f"don't know how to convert {type(s)}")
+
+
+def to_ds_instance(klass):
+    def f(x):
+        if isinstance(x, klass):
+            return x
+        elif isinstance(x, dict):
+            return klass(**x)
+        elif isinstance(x, str):
+            return klass(x)
+        else:
+            ValueError(f"Unknown how to conver {type(x).__name__} to {klass}")
+    return f

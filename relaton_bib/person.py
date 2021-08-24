@@ -1,25 +1,25 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Union, TYPE_CHECKING
+from typing import List
 
 import re
 import xml.etree.ElementTree as ET
 
-from .localized_string import LocalizedString
 from .relaton_bib import lang_filter
-if TYPE_CHECKING:
-    from .contributor import Address, Affiliation, Contact, Contributor
+from .localized_string import LocalizedString
+from .organization import Affiliation
+from .contributor import Contributor
 
 
 @dataclass
 class FullName:
-    surname: LocalizedString
-    completename: LocalizedString
-    forename: List[LocalizedString] = field(default_factory=List)
-    initial: List[LocalizedString] = field(default_factory=List)
-    addition: List[LocalizedString] = field(default_factory=List)
-    prefix: List[LocalizedString] = field(default_factory=List)
+    surname: LocalizedString = None
+    completename: LocalizedString = None
+    forename: List[LocalizedString] = field(default_factory=list)
+    initial: List[LocalizedString] = field(default_factory=list)
+    addition: List[LocalizedString] = field(default_factory=list)
+    prefix: List[LocalizedString] = field(default_factory=list)
 
     def __post_init__(self):
         if not self.surname and not self.completename:
@@ -99,8 +99,7 @@ class PersonIdentifier:
 class Person(Contributor):
     name: FullName
     affiliation: List[Affiliation] = field(default_factory=List)
-    identifier = List[PersonIdentifier] = field(default_factory=List)
-    contact: List[Union[Address, Contact]] = field(default_factory=List)
+    identifier: List[PersonIdentifier] = field(default_factory=List)
 
     def to_xml(self, parent, opts={}):
         name = "person"
