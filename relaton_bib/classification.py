@@ -1,9 +1,7 @@
-import datetime
-import xml.etree.ElementTree as ET
-
 from dataclasses import dataclass
-from enum import Enum
 from typing import Optional
+
+import xml.etree.ElementTree as ET
 
 
 @dataclass(frozen=True)

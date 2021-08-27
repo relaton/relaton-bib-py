@@ -93,7 +93,7 @@ class LocalizedString:
                 self.content))
         else:
             if not (any(self.language) or any(self.script) or has_attrs):
-                return f"{prefix}:: {self.content}\n"
+                return f"{prefix}:: {self.content}"
 
             out = [f"{prefix}::"] if count > 1 else []
             out.append(f"{pref}content:: {self.content}")

@@ -6,8 +6,6 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 
-from .relaton_bib import single_element_array
-
 
 class BibItemLocalityType(Enum):
     SECTION = "section"
@@ -43,7 +41,8 @@ class BibItemLocality:
     def __post_init__(self):
         if not (BibItemLocalityType.has_value(self.type)
                 or re.match(r"locality:[a-zA-Z0-9_]+", self.type)):
-            logging.warning(f"[relaton-bib] invalid locality type: {self.type}")
+            logging.warning(
+                f"[relaton-bib] invalid locality type: {self.type}")
 
     def to_xml(self, parent):
         parent.attrib["type"] = self.type
@@ -87,7 +86,7 @@ class LocalityStack:
             loc.to_xml(node)
         return node
 
-    # TODO REVISIT
+    # TODO REVISIT and for other classes too
     # def to_hash
     #   { "locality_stack" => single_element_array(locality) }
     # end
@@ -104,7 +103,7 @@ class SourceLocality(BibItemLocality):
 class SourceLocalityStack(LocalityStack):
     def to_xml(self, parent):
         node = ET.SubElement(parent, "sourceLocalityStack")
-        for loc in locality:
+        for loc in self.locality:
             loc.to_xml(node)
         return node
 
