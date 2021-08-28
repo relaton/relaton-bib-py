@@ -12,20 +12,16 @@ class WorkGroup:
     def to_xml(self, parent):
         parent.text = self.content
         if self.number:
-            parent.attrib["number"] = self.number
+            parent.attrib["number"] = str(self.number)
         if self.type:
             parent.attrib["type"] = self.type
+        return parent
 
     def to_asciibib(self, prefix=""):
-        """Return AsciiBib representation
-
-        Keyword arguments:
-        prefix -- AsciiBib prefix
-        """
-        pref = prefix + "." if prefix else prefix  # TODO is that correct?
-        out = f"{pref}content:: {self.content}\n"
+        pref = f"{prefix}." if prefix else prefix
+        out = [f"{pref}content:: {self.content}"]
         if self.number:
-            out += f"{pref}number:: {self.number}\n"
+            out.append(f"{pref}number:: {self.number}")
         if self.type:
-            out += f"{pref}type:: #{self.type}\n"
-        return out
+            out.append(f"{pref}type:: {self.type}")
+        return "\n".join(out)
