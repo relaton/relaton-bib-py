@@ -66,7 +66,7 @@ def localized_string(s):
         ValueError(f"don't know how to convert {type(s)}")
 
 
-def to_ds_instance(klass):
+def to_ds_instance(klass, fail=False):
     def f(x):
         if isinstance(x, klass):
             return x
@@ -74,6 +74,8 @@ def to_ds_instance(klass):
             return klass(**x)
         elif isinstance(x, str):
             return klass(x)
-        else:
+        elif fail:
             ValueError(f"Unknown how to conver {type(x).__name__} to {klass}")
+        else:
+            return x
     return f

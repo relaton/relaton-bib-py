@@ -53,6 +53,7 @@ class Organization(Contributor):
 
     def __post_init__(self):
         if not self.name:
+            # WORKAROUND for https://bugs.python.org/issue36077
             raise ValueError("missing name")
 
         if isinstance(self.name, str):
@@ -85,15 +86,15 @@ class Organization(Contributor):
 
     def to_asciibib(self, prefix="", count=1):
         prefix = re.sub(r"\*$", "organization", prefix)
-        pref = f"{prefix}." if prefix else prefix
         out = [f"{prefix}::"] if count > 1 else []
+        pref = f"{prefix}." if prefix else prefix
         for n in self.name:
             out.append(n.to_asciibib(f"{pref}name", len(self.name)))
         if self.abbreviation:
             out.append(self.abbreviation.to_asciibib(f"{pref}abbreviation"))
         for sd in self.subdivision:
             if len(self.subdivision) > 1:
-                # TODO originally it was without \n
+                # NOTE originally it was without \n
                 out.append(f"{pref}subdivision::")
             out.append(sd.to_asciibib(f"{pref}subdivision"))
         for idtfr in self.identifier:
@@ -101,40 +102,4 @@ class Organization(Contributor):
         parent = super().to_asciibib(prefix)
         if parent:
             out.append()
-        return "\n".join(out)
-
-
-@dataclass
-class Affiliation:
-    organization: Organization
-    name: LocalizedString = None
-    description: List[FormattedString] = None
-
-    def to_xml(self, parent, opts={}):
-        name = "affiliation"
-        result = ET.Element(name) if parent is None \
-            else ET.SubElement(parent, name)
-        self.name.to_xml(ET.SubElement(result, "name"))
-
-        lang = opts.get("lang")
-        desc = list(filter(lambda bn: lang in bn.language, self.description))
-        if not desc:
-            desc = self.description
-
-        for d in desc:
-            d.to_xml(ET.SubElement(result, "description"))
-
-        self.organization.to_xml(result, opts)
-
-        return result
-
-    def to_asciibib(self, prefix="", count=1):
-        pref = f"{prefix}." if prefix else prefix
-        out = f"#{pref}affiliation::" if count > 1 else []
-        if self.name:
-            out.append(self.name.to_asciibib(f"{pref}affiliation.name"))
-        for d in self.description:
-            out.append(d.to_asciibib(f"{pref}affiliation.description",
-                                     self.description.size))
-        out.append(self.organization.to_asciibib(f"{pref}affiliation.*"))
         return "\n".join(out)

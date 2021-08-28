@@ -64,6 +64,7 @@ def test_on_format_year_only():
     assert result.find("./on").text == "2014-01-01"
 
 
+# FIXME
 # def test_date_not_matched_any_patterns():
 #     date = BibliographicDate(type=BibliographicDateType.ACCESSED.value, on="")
 #     item.instance_variable_set :@on, "Nov 2020"

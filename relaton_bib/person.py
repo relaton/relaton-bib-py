@@ -8,7 +8,7 @@ import xml.etree.ElementTree as ET
 
 from .relaton_bib import lang_filter
 from .localized_string import LocalizedString
-from .organization import Affiliation
+from .affiliation import Affiliation
 from .contributor import Contributor
 
 
@@ -97,9 +97,14 @@ class PersonIdentifier:
 
 @dataclass
 class Person(Contributor):
-    name: FullName
+    name: FullName = None
     affiliation: List[Affiliation] = field(default_factory=List)
     identifier: List[PersonIdentifier] = field(default_factory=List)
+
+    def __post_init__(self):
+        # WORKAROUND for https://bugs.python.org/issue36077
+        if not self.name:
+            raise ValueError("missing name")
 
     def to_xml(self, parent, opts={}):
         name = "person"

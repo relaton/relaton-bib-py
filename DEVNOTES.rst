@@ -57,4 +57,16 @@ Wheel package vs EGG package for publishing
 
 https://packaging.python.org/discussions/wheel-vs-egg/
 
+TypeError: non-default argument 'name' follows default argument
+---------------------------------------------------------------
+
+ - https://bugs.python.org/issue39300
+ - https://bugs.python.org/issue36077
+ - https://stackoverflow.com/questions/51575931/class-inheritance-in-python-3-7-dataclasses/53085935#53085935
+
+List vs list
+------------
+
+ - https://stackoverflow.com/questions/52629265/static-typing-in-python3-list-vs-list
+
 [????] Open question how to simplify imports

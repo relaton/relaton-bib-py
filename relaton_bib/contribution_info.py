@@ -1,16 +1,15 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Union, TYPE_CHECKING
+from typing import List, Union
 
 import logging
 import xml.etree.ElementTree as ET
 
 from .formatted_string import FormattedString
 from .relaton_bib import lang_filter, to_ds_instance
-if TYPE_CHECKING:
-    from .organization import Organization
-    from .person import Person
+from .person import Person
+from .organization import Organization
 
 
 class ContributorRoleType(Enum):
@@ -83,6 +82,7 @@ class ContributionInfo:
         return self.entity.to_xml(parent, opts)
 
     def to_asciibib(self, prefix="", count=1):
+        # V ported from original code but looks strange
         pref = (prefix.split(".") + [None])[0]
         out = [f"{pref}::"] if count > 1 else []
         out.append(self.entity.to_asciibib(prefix))
