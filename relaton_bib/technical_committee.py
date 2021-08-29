@@ -13,7 +13,8 @@ class TechnicalCommittee:
 
     def to_xml(self, parent=None):
         name = "technical-committee"
-        node = ET.SubElement(parent, name) if parent else ET.Element(name)
+        node = ET.Element(name)if parent is None \
+            else ET.SubElement(parent, name)
         self.workgroup.to_xml(node)
         return node
 
