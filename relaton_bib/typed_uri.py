@@ -1,15 +1,12 @@
-import datetime
-import typing
-
 from dataclasses import dataclass
 
 import xml.etree.ElementTree as ET
 
 
-@dataclass(frozen=True)  # FIXME missing content=(url)
+@dataclass()
 class TypedUri:
+    content: str  # FIXME add URI validation
     type: str = None
-    content: str  # NOTE originaly it was URI, but looks like it's not need
 
     # to_hash -> dataclasses.asdict
 
