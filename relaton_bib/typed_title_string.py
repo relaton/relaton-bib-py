@@ -1,14 +1,13 @@
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Union
 
 import re
 import xml.etree.ElementTree as ET
 
-from .forwardable import Forwardable
-from .formatted_string import FormattedString
+from .formatted_string import FormattedString, FormattedStringFormat
 from .localized_string import LocalizedString
-from .relaton_bib import lang_filter
+from .relaton_bib import lang_filter, delegate
 
 
 @dataclass
@@ -16,9 +15,9 @@ class TypedTitleString:
     type: str = None
     title: FormattedString = None
     content: Union[str, List[LocalizedString]] = None
-    language: List[str] = None
-    script: List[str] = None
-    format: List[str] = None
+    language: List[str] = field(default_factory=list)
+    script: List[str] = field(default_factory=list)
+    format: str = FormattedStringFormat.TEXT_PLAIN.value
 
     def __post_init__(self):
         if self.title is None and self.content is None:
@@ -78,20 +77,6 @@ class TypedTitleString:
             out.append(f"{pref}title.type:: {self.type}")
         out.append(self.title.to_asciibib(f"{pref}title", 1, bool(self.type)))
         return "\n".join(out)
-
-
-def delegate(to, *methods):
-    def dec(klass):
-        def create_delegator(method):
-            def delegator(self, *args, **kwargs):
-                obj = getattr(self, to)
-                m = getattr(obj, method)
-                return m(*args, **kwargs)
-            return delegator
-        for m in methods:
-            setattr(klass, m, create_delegator(m))
-        return klass
-    return dec
 
 
 @dataclass

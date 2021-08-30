@@ -3,8 +3,8 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from typing import Optional
 
-from .forwardable import Forwardable
 from .formatted_string import FormattedString
+from .relaton_bib import delegate
 
 
 @dataclass(frozen=True)
@@ -30,13 +30,10 @@ class BiblioNote(FormattedString):
 
 
 @dataclass
-class BiblioNoteCollection(Forwardable):
+@delegate("array", "append", "__getitem__", "__len__", "__iter__",
+          "__reversed__", "__contains__")
+class BiblioNoteCollection():
     array: list[BiblioNote]
-
-    def __post_init__(self):
-        self.delegates = [("array", "__getitem__", "append", "append",
-                           "__len__", "__iter__", "__reversed__",
-                           "__contains__")]
 
     @property
     def first(self):
