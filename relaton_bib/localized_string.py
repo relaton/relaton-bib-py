@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Union
+from typing import Union, List
 
 import xml.sax.saxutils as saxutils
 import xml.etree.ElementTree as ET
@@ -9,8 +9,8 @@ import xml.etree.ElementTree as ET
 @dataclass(frozen=True)
 class LocalizedString:
     content: Union[str, list[LocalizedString]]
-    language: list[str] = field(default_factory=list)
-    script: list[str] = field(default_factory=list)
+    language: List[str] = field(default_factory=list)
+    script: List[str] = field(default_factory=list)
 
     def __post_init__(self):
         inv = None
