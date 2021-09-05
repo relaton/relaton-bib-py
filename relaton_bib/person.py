@@ -6,7 +6,7 @@ from typing import List
 import re
 import xml.etree.ElementTree as ET
 
-from .relaton_bib import lang_filter
+from .relaton_bib import lang_filter, localized_string
 from .localized_string import LocalizedString
 from .affiliation import Affiliation
 from .contributor import Contributor
@@ -24,6 +24,32 @@ class FullName:
     def __post_init__(self):
         if not self.surname and not self.completename:
             raise ValueError("Should be given surname or completename")
+
+        if isinstance(self.surname, str):
+            self.surname = LocalizedString(self.surname)
+
+        if isinstance(self.completename, str):
+            self.completename = LocalizedString(self.completename)
+
+        if isinstance(self.forename, str):
+            self.forename = [LocalizedString(self.forename)]
+        elif isinstance(self.forename, List):
+            self.forename = list(map(localized_string, self.forename))
+
+        if isinstance(self.initial, str):
+            self.initial = [LocalizedString(self.initial)]
+        elif isinstance(self.initial, List):
+            self.initial = list(map(localized_string, self.initial))
+
+        if isinstance(self.addition, str):
+            self.addition = [LocalizedString(self.addition)]
+        elif isinstance(self.addition, List):
+            self.addition = list(map(localized_string, self.addition))
+
+        if isinstance(self.prefix, str):
+            self.prefix = [LocalizedString(self.prefix)]
+        elif isinstance(self.prefix, List):
+            self.prefix = list(map(localized_string, self.prefix))
 
     def to_xml(self, parent, opts={}):
         name = "name"
@@ -80,6 +106,9 @@ class PersonIdentifier:
         if not PersonIdentifierType.has_value(self.type):
             raise ValueError('Invalid type. It should be "isni" or "uri".')
 
+        if isinstance(self.type, PersonIdentifierType):
+            self.type = self.type.value
+
     def to_xml(self, parent):
         name = "identifier"
         result = ET.Element(name) if parent is None \
@@ -90,7 +119,7 @@ class PersonIdentifier:
     def to_asciibib(self, prefix="", count=1):
         pref = prefix + "." if prefix else prefix
         out = [f"{prefix}::"] if count > 1 else []
-        out.append(f"{pref}type:: {type}")
+        out.append(f"{pref}type:: {self.type}")
         out.append(f"{pref}value:: {self.value}")
         return "\n".join(out)
 
@@ -98,8 +127,8 @@ class PersonIdentifier:
 @dataclass
 class Person(Contributor):
     name: FullName = None
-    affiliation: List[Affiliation] = field(default_factory=List)
-    identifier: List[PersonIdentifier] = field(default_factory=List)
+    affiliation: List[Affiliation] = field(default_factory=list)
+    identifier: List[PersonIdentifier] = field(default_factory=list)
 
     def __post_init__(self):
         # WORKAROUND for https://bugs.python.org/issue36077
@@ -128,4 +157,4 @@ class Person(Contributor):
         for i in self.identifier:
             out.append(i.to_asciibib(pref, len(self.identifier)))
         out.append(super().to_asciibib(pref))
-        return "\n".append(out)
+        return "\n".join([l for l in out if l])
