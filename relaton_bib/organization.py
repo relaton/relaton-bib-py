@@ -59,13 +59,13 @@ class Organization(Contributor):
         if isinstance(self.name, str):
             self.name = [LocalizedString(self.name)]
         elif isinstance(self.name, List):
-            self.name = map(localized_string, self.name)
+            self.name = list(map(localized_string, self.name))
 
         if isinstance(self.abbreviation, str):
             self.abbreviation = LocalizedString(self.name)
 
         if isinstance(self.subdivision, List):
-            self.subdivision = map(localized_string, self.subdivision)
+            self.subdivision = list(map(localized_string, self.subdivision))
 
     def to_xml(self, parent, opts={}):
         name = "organization"
