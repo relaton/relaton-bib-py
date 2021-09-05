@@ -83,8 +83,6 @@ def test_full_to_xml(subject_full):
     host = ET.Element("host")
     result = subject_full.to_xml(host)
 
-    print(ET.tostring(result))
-
     assert host.find("./series") is not None
     assert result.attrib["type"] == "main"
     assert result.find("./title") is None

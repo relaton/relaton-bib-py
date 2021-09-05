@@ -44,12 +44,10 @@ class DocumentIdentifier:
         logging.warning(f"[relaton-bib] unknown doc type: {self.type}")
 
     def all_parts(self):
-        print(f"self={self}")
         if self.type == DocumentIdType.URN:
             return re.sub(r"^(urn:iec:std(?::[^:]*){4}).*", r"\1:ser", self.id)
         else:
             self.id += " (all parts)"
-            print(f"self={self}")
 
     def to_xml(self, parent, opts={}):
         lang = opts.get("lang")
