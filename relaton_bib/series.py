@@ -1,8 +1,7 @@
-import logging
-
 from dataclasses import dataclass
 from enum import Enum
 
+import logging
 import xml.etree.ElementTree as ET
 
 from .formatted_ref import FormattedRef
@@ -13,6 +12,7 @@ from .typed_title_string import TypedTitleString
 class SeriesType(str, Enum):
     MAIN = "main"
     ALT = "alt"
+    JOURNAL = "journal"
 
     @classmethod
     def has_value(cls, value):
@@ -44,7 +44,7 @@ class Series:
 
     def to_xml(self, parent):
         name = "series"
-        node = ET.Element(name) if parent is None\
+        node = ET.Element(name) if parent is None \
             else ET.SubElement(parent, name)
 
         if self.formattedref:

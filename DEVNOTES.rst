@@ -69,4 +69,11 @@ List vs list
 
  - https://stackoverflow.com/questions/52629265/static-typing-in-python3-list-vs-list
 
+iso639-lang vs iso-639
+----------------------
+
+https://pypi.org/project/iso639-lang/ vs https://pypi.org/project/iso-639/
+
+iso-639 - has less size
+
 [????] Open question how to simplify imports
