@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import List, Union
 
 import re
@@ -12,6 +13,12 @@ from .relaton_bib import lang_filter, delegate
 
 @dataclass
 class TypedTitleString:
+    class Type(str, Enum):
+        MAIN = "main"
+        TINTRO = "title-intro"
+        TMAIN = "title-main"
+        TPART = "title-part"
+
     type: str = None
     title: FormattedString = None
     content: Union[str, List[LocalizedString]] = None
@@ -32,14 +39,17 @@ class TypedTitleString:
 
     @classmethod
     def from_string(cls, title, lang=None, script=None):
-        types = ["title-intro", "title-main", "title-part"]
+        types = [cls.Type.TINTRO, cls.Type.TMAIN, cls.Type.TPART]
         ttls = cls.split_title(title)
         tts = [None if p is None else
-               cls(type=types[i], content=p, language=lang, script=script)
+               cls(type=types[i].value,
+                   content=p,
+                   language=lang,
+                   script=script)
                for i, p in enumerate(ttls)]
         tts = list(filter(None, tts))
         ttls = list(filter(None, ttls))
-        tts.append(TypedTitleString(type="main",
+        tts.append(TypedTitleString(type=cls.Type.MAIN,
                                     content=" - ".join(ttls),
                                     language=lang,
                                     script=script))
@@ -95,7 +105,8 @@ class TypedTitleStringCollection():
             if lang else self
 
     def delete_title_part(self):
-        self.titles = filter(lambda t: t.type != "title-part", self.titles)
+        self.titles = filter(lambda t: t.type != TypedTitleString.Type.TPART,
+                             self.titles)
 
     # @param init [Array, Hash]
     # @return [RelatonBib::TypedTitleStringCollection]
