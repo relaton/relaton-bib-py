@@ -9,7 +9,7 @@ from .relaton_bib import delegate
 
 @dataclass(frozen=True)
 class BiblioNote(FormattedString):
-    type: Optional[str] = None
+    type: str = None
 
     def to_xml(self, parent=None):
         name = "node"

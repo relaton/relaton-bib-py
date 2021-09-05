@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Optional
 
 
-class BibItemLocalityType(Enum):
+class BibItemLocalityType(str, Enum):
     SECTION = "section"
     CLAUSE = "clause"
     PART = "part"
@@ -43,6 +43,9 @@ class BibItemLocality:
                 or re.match(r"locality:[a-zA-Z0-9_]+", self.type)):
             logging.warning(
                 f"[relaton-bib] invalid locality type: {self.type}")
+
+        if isinstance(self.type, BibItemLocalityType):
+            self.type = self.type.value
 
     def to_xml(self, parent):
         parent.attrib["type"] = self.type

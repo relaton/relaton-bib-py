@@ -37,14 +37,17 @@ class BibliographicDate:
     NO_YEAR: ClassVar[str] = "--"
 
     type: str
-    on: Optional[datetime.date] = None
-    from_: Optional[datetime.date] = None
-    to: Optional[datetime.date] = None
+    on: datetime.date = None
+    from_: datetime.date = None
+    to: datetime.date = None
 
     def __post_init__(self):
         if not BibliographicDateType.has_value(self.type):
             logging.warning(
                 f"[relaton-bib] invalid bibliographic date type: {self.type}")
+
+        if isinstance(self.type, BibliographicDateType):
+            self.type = self.type.value
 
         if not (self.on or self.from_):
             raise ValueError("expected on or from_ argument")
