@@ -1,5 +1,5 @@
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List
 
 import xml.etree.ElementTree as ET
@@ -7,26 +7,23 @@ import xml.etree.ElementTree as ET
 from .organization import Organization
 from .localized_string import LocalizedString
 from .formatted_string import FormattedString
+from .relaton_bib import lang_filter
 
 
 @dataclass
 class Affiliation:
     organization: Organization
     name: LocalizedString = None
-    description: List[FormattedString] = None
+    description: List[FormattedString] = field(default_factory=list)
 
     def to_xml(self, parent, opts={}):
         name = "affiliation"
         result = ET.Element(name) if parent is None \
             else ET.SubElement(parent, name)
-        self.name.to_xml(ET.SubElement(result, "name"))
+        if self.name:
+            self.name.to_xml(ET.SubElement(result, "name"))
 
-        lang = opts.get("lang")
-        desc = list(filter(lambda bn: lang in bn.language, self.description))
-        if not desc:
-            desc = self.description
-
-        for d in desc:
+        for d in lang_filter(self.description, opts):
             d.to_xml(ET.SubElement(result, "description"))
 
         self.organization.to_xml(result, opts)
