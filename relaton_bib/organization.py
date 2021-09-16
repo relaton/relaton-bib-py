@@ -17,6 +17,10 @@ class OrgIdentifierType(Enum):
     ORCID = "orcid"
     URI = "uri"
 
+    @classmethod
+    def has_value(cls, value):
+        return value in cls._value2member_map_
+
 
 @dataclass(frozen=True)
 class OrgIdentifier:
@@ -62,7 +66,7 @@ class Organization(Contributor):
             self.name = list(map(localized_string, self.name))
 
         if isinstance(self.abbreviation, str):
-            self.abbreviation = LocalizedString(self.name)
+            self.abbreviation = LocalizedString(self.abbreviation)
 
         if isinstance(self.subdivision, List):
             self.subdivision = list(map(localized_string, self.subdivision))

@@ -8,7 +8,7 @@ import xml.etree.ElementTree as ET
 
 from .formatted_string import FormattedString, FormattedStringFormat
 from .localized_string import LocalizedString
-from .relaton_bib import lang_filter, delegate
+from .relaton_bib import lang_filter, delegate, to_ds_instance
 
 
 @dataclass
@@ -96,9 +96,7 @@ class TypedTitleStringCollection():
     titles: List[TypedTitleString]
 
     def __post_init__(self):
-        self.titles = list(map(
-            lambda t: TypedTitleString(**t) if isinstance(t, dict) else t,
-            self.titles))
+        self.titles = list(map(to_ds_instance(TypedTitleString), self.titles))
 
     def lang(self, lang=None):
         return self.__class__(lang_filter(self.titles, {"lang": lang})) \

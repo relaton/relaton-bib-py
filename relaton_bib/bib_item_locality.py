@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
+from typing import List
 
 
 class BibItemLocalityType(str, Enum):
@@ -36,7 +36,7 @@ class BibItemLocality:
 
     type: str
     reference_from: str
-    reference_to: Optional[str] = None
+    reference_to: str = None
 
     def __post_init__(self):
         if not (BibItemLocalityType.has_value(self.type)
@@ -45,7 +45,7 @@ class BibItemLocality:
                 f"[relaton-bib] invalid locality type: {self.type}")
 
         if isinstance(self.type, BibItemLocalityType):
-            self.type = self.type.value
+            object.__setattr__(self, "type", self.type.value)
 
     def to_xml(self, parent):
         parent.attrib["type"] = self.type
@@ -81,7 +81,7 @@ class Locality(BibItemLocality):
 
 @dataclass(frozen=True)
 class LocalityStack:
-    locality: list[Locality]
+    locality: List[Locality]
 
     def to_xml(self, parent):
         node = ET.SubElement(parent, "localityStack")

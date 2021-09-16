@@ -1,7 +1,382 @@
-# # frozen_string_literal: true
+import pytest
 
-# require "yaml"
-# require "jing"
+import datetime
+from typing import TYPE_CHECKING
+
+from relaton_bib.bibliographic_item import BibliographicItem, \
+    BibliographicItemType
+from relaton_bib.address import Address
+from relaton_bib.contact import Contact
+from relaton_bib.affiliation import Affiliation
+from relaton_bib.typed_uri import TypedUri
+from relaton_bib.document_identifier import DocumentIdentifier, DocumentIdType
+from relaton_bib.copyright_association import CopyrightAssociation
+from relaton_bib.formatted_string import FormattedString
+from relaton_bib.contribution_info import ContributionInfo, ContributorRole
+from relaton_bib.bibliographic_date import BibliographicDate, \
+    BibliographicDateType
+from relaton_bib.series import Series
+from relaton_bib.document_status import DocumentStatus
+from relaton_bib.organization import Organization, OrgIdentifier
+from relaton_bib.localized_string import LocalizedString
+from relaton_bib.typed_title_string import TypedTitleString, \
+    TypedTitleStringCollection
+from relaton_bib.technical_committee import TechnicalCommittee
+from relaton_bib.formatted_ref import FormattedRef
+from relaton_bib.medium import Medium
+from relaton_bib.classification import Classification
+from relaton_bib.validity import Validity
+from relaton_bib.bib_item_locality import BibItemLocality, Locality, \
+    BibItemLocalityType, SourceLocalityStack, SourceLocality, LocalityStack
+from relaton_bib.biblio_note import BiblioNote, BiblioNoteCollection
+from relaton_bib.biblio_version import BibliographicItemVersion
+from relaton_bib.place import Place
+from relaton_bib.person import Person, FullName, PersonIdentifier
+from relaton_bib.structured_identifier import StructuredIdentifierCollection
+from relaton_bib.editorial_group import EditorialGroup
+from relaton_bib.ics import ICS
+from relaton_bib.document_relation_collection import DocRelationCollection
+from relaton_bib.document_relation import DocumentRelation
+from relaton_bib.workgroup import WorkGroup
+from relaton_bib.structured_identifier import StructuredIdentifier
+
+
+@pytest.fixture
+def subject():
+    return BibliographicItem(
+        id="ISOTC211",
+        title=[
+            LocalizedString("Geographic information"),
+            LocalizedString(content="Information géographique",
+                            language="fr",
+                            script="Latn"),
+        ],
+        type=BibliographicItemType.STANDARD,
+        doctype="document",
+        subdoctype="subdocument",
+        docid=[
+            DocumentIdentifier("TC211", DocumentIdType.ISO),
+            DocumentIdentifier("ISBN", "isbn"),
+            DocumentIdentifier("LCCN", "lccn"),
+            DocumentIdentifier("ISSN", "issn", "series"),
+            DocumentIdentifier("urn:iso:std:iso:123:stage-90.93:ed-3:en,fr",
+                               "URN"),
+            DocumentIdentifier("XYZ"),
+        ],
+        docnumber="123456",
+        edition="1",
+        language=["en", "fr"],
+        script="Latn",
+        version=BibliographicItemVersion(revision_date="2019-04-01",
+                                         draft=["draft"]),
+        biblionote=BiblioNoteCollection([
+            BiblioNote(content="An note", type="annote"),
+            BiblioNote(content="How published", type="howpublished"),
+            BiblioNote(content="Comment", type="comment"),
+            BiblioNote(content="Table Of Contents", type="tableOfContents"),
+
+        ]),
+        docstatus=DocumentStatus(
+            stage=DocumentStatus.Stage(value="30", abbreviation="CD"),
+            substage=DocumentStatus.Stage(value="substage"),
+            iteration="final"
+        ),
+        date=[
+            BibliographicDate(
+                type=BibliographicDateType.ISSUED, on="2014"),
+            BibliographicDate(
+                type=BibliographicDateType.PUBLISHED, on="2014-04"),
+            BibliographicDate(
+                type=BibliographicDateType.ACCESSED, on="2015-05-20")
+        ],
+        abstract=[
+            FormattedString(
+                content="ISO 19115-1:2014 defines the schema required for ...",
+                language="en",
+                script="Latn",
+                format="text/plain"
+            ),
+            FormattedString(
+                content="ISO 19115-1:2014 defines the schema required for ...",
+                language="en",
+                script="Latn",
+                format="text/plain"
+            ),
+            FormattedString(
+                content="L'ISO 19115-1:2014 définit le schéma requis pour ...",
+                language="fr",
+                script="Latn",
+                format="text/plain"
+            )
+        ],
+        contributor=[
+            ContributionInfo(
+                role=[
+                    ContributorRole(
+                        type="publisher",
+                        description=[FormattedString("Publisher role")])
+                ],
+                entity=Organization(
+                    name="International Organization for Standardization",
+                    abbreviation="ISO",
+                    subdivision="division")
+            ),
+            ContributionInfo(
+                role=[ContributorRole(type="author")],
+                entity=Person(
+                    name=FullName(completename=LocalizedString(
+                        content="A. Bierman",
+                        language="en",
+                        script="Latn")),
+                    affiliation=Affiliation(Organization(
+                        name="IETF",
+                        abbreviation="IETF",
+                        identifier=OrgIdentifier(
+                            type="uri",
+                            value="www.ietf.org")
+                    )),
+                    contact=[
+                        Address(
+                            street=["Street"],
+                            city="City",
+                            postcode="123456",
+                            country="Country",
+                            state="State"),
+                        Contact(type="phone", value="223322")
+                    ]
+                )
+            ),
+            ContributionInfo(
+                role=[
+                    ContributorRole(
+                        type="publisher",
+                        description=[FormattedString("Publisher descr")]),
+                    ContributorRole(
+                        type="editor",
+                        description=[FormattedString("Editor description")])
+                ],
+                entity=Organization(
+                    name="IETF",
+                    abbreviation="IETF",
+                    identifier=OrgIdentifier(
+                        type="uri",
+                        value="www.ietf.org"))
+            ),
+            ContributionInfo(
+                role=[ContributorRole(type="author")],
+                entity=Person(
+                    name=FullName(
+                        completename=LocalizedString(
+                            content="A. Bierman",
+                            language="en", script="Latn"),
+                        initial="A.",
+                        surname="Bierman",
+                        forename="Forename",
+                        addition="Addition",
+                        prefix="Prefix"),
+                    affiliation=Affiliation(
+                        organization=Organization(
+                            name="IETF",
+                            abbreviation="IETF",
+                            identifier=OrgIdentifier(
+                                type="uri",
+                                value="www.ietf.org")),
+                        description=FormattedString(
+                            content="Description",
+                            language="en")
+                    ),
+                    contact=[
+                        Address(
+                            street=["Street"],
+                            city="City",
+                            postcode="123456",
+                            country="Country",
+                            state="State"),
+                        Contact(type="phone", value="223322")
+                    ],
+                    identifier=PersonIdentifier(
+                        type="uri",
+                        value="www.person.com")
+                )
+            ),
+            ContributionInfo(
+                entity=Organization(name="Institution"),
+                role=[ContributorRole(
+                    type="distributor",
+                    description=[FormattedString("sponsor")])],
+            )
+        ],
+        copyright=[CopyrightAssociation(
+            owner=[ContributionInfo(
+                Organization(
+                    name="International Organization for Standardization",
+                    abbreviation="ISO",
+                    identifier=OrgIdentifier(
+                        type="uri",
+                        value="www.ietf.org")))],
+            from_="2014",
+            to="2020",
+            scope="Scope"
+        )],
+        link=[
+            TypedUri(type="src",
+                     content="https://www.iso.org/standard/53798.html"),
+            TypedUri(type="obp",
+                     content="https://www.iso.org/obp/ui/#!iso:std:53798:en"),
+            TypedUri(
+                type="rss",
+                content="https://www.iso.org/contents/data/standard/05/37/53798\
+                         .detail.rss"),
+            TypedUri(type="doi", content="http://standrd.org/doi-123"),
+            TypedUri(type="file", content="file://path/file"),
+        ],
+        relation=DocRelationCollection([
+            DocumentRelation(
+                type=DocumentRelation.Type.updates,
+                bibitem=BibliographicItem(
+                    formattedref=FormattedRef("ISO 19115:2003")),
+                locality=[
+                    LocalityStack([
+                        Locality(
+                            type="section",
+                            reference_from="Reference from")
+                    ]),
+                    LocalityStack([
+                        Locality(type="chapter", reference_from="1"),
+                        Locality(type="page", reference_from="2")
+                    ])
+                ],
+                source_locality=[
+                    SourceLocalityStack([
+                        SourceLocality(type="volume", reference_from="2"),
+                        SourceLocality(type="chapter", reference_from="3")
+
+                    ])
+                ]),
+            DocumentRelation(
+                type=DocumentRelation.Type.obsoletes,
+                description=FormattedString(format="text/plain",
+                                            content="supersedes"),
+                bibitem=BibliographicItem(
+                    type=BibliographicItemType.STANDARD,
+                    formattedref=FormattedRef("ISO 19115:2003/Cor 1:2006"))),
+            DocumentRelation(
+                type=DocumentRelation.Type.partOf,
+                bibitem=BibliographicItem(
+                    title=TypedTitleStringCollection(
+                        [TypedTitleString(type="main", content="Book title")]))
+            )
+        ]),
+        series=[
+            Series(
+                type="main",
+                title=TypedTitleString(
+                    type="original",
+                    content="ISO/IEC FDIS 10118-3",
+                    language="en",
+                    script="Latn",
+                    format="text/plain"
+                ),
+                place="Serie's place",
+                organization="Serie's organization",
+                abbreviation=LocalizedString("ABVR"),
+                from_="2009-02-01",
+                to="2010-12-20",
+                number="serie1234",
+                partnumber="part5678"),
+            Series(
+                type="alt",
+                formattedref=FormattedRef(
+                    content="serieref",
+                    language="en",
+                    script="Latn")
+            ),
+            Series(
+                type="journal",
+                title=TypedTitleString(content="Journal"),
+                number="7"
+            ),
+            Series(
+                title=TypedTitleString(content=[
+                    LocalizedString(content="Series",
+                                    language="en",
+                                    script="Latn"),
+                    LocalizedString(content="Séries",
+                                    language="fr",
+                                    script="Latn")])
+            ),
+        ],
+        medium=Medium(
+            form="medium form",
+            size="medium size",
+            scale="medium scale"),
+        place=[
+            Place("bib place"),
+            Place(name="Geneva", uri="geneva.place", region="Switzelznd")
+        ],
+        extent=[
+            BibItemLocality(
+                type=BibItemLocalityType.SECTION,
+                reference_from="Reference from",
+                reference_to="Reference to"),
+            BibItemLocality(
+                type=BibItemLocalityType.CHAPTER,
+                reference_from="4"),
+            BibItemLocality(
+                type=BibItemLocalityType.PAGE,
+                reference_from="10",
+                reference_to="20"),
+            BibItemLocality(
+                type=BibItemLocalityType.VOLUME,
+                reference_from="1"),
+        ],
+        accesslocation=["accesslocation1", "accesslocation2"],
+        classification=[
+            Classification(type="type", value="value"),
+            Classification("keyword", "Keywords"),
+            Classification("mendeley", "Mendeley Tags")
+        ],
+        keyword=["Keyword", "Key Word"],
+        license=["License"],
+        validity=Validity(
+            begins=datetime.datetime.strptime("2010-10-10 12:21",
+                                              Validity.FORMAT),
+            ends=datetime.datetime.strptime("2011-02-03 18:30",
+                                            Validity.FORMAT),
+            revision=datetime.datetime.strptime("2011-03-04 09:00",
+                                                Validity.FORMAT),
+        ),
+        editorialgroup=EditorialGroup([
+            TechnicalCommittee(
+                WorkGroup(
+                    content="Editorial group",
+                    number=1,
+                    type="Type",
+                    # identifier="Identifier",
+                    # prefix="Prefix"
+                ))
+        ]),
+        ics=ICS(code="01", text="First"),
+        structuredidentifier=StructuredIdentifierCollection([
+            StructuredIdentifier(
+                type="type 1",
+                agency=["agency 1", "agency 2"],
+                class_="class 1",
+                docnumber="123",
+                partnumber="4",
+                edition="1",
+                version="2",
+                supplementtype="type 2",
+                supplementnumber="5",
+                language="en",
+                year="2020"),
+            StructuredIdentifier(docnumber="456", agency=["agency 3"])
+        ])
+    )
+
+
+def test_subject_created(subject):
+    assert type(subject) == BibliographicItem
 
 # RSpec.describe "RelatonBib" => :BibliographicItem do
 #   context "instance" do

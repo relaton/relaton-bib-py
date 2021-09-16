@@ -49,7 +49,7 @@ class StructuredIdentifier:
     agency: List[str] = field(default_factory=list)
 
     type: str = None
-    klass: str = None
+    class_: str = None
     partnumber: str = None
     edition: str = None
     version: str = None
@@ -68,7 +68,7 @@ class StructuredIdentifier:
 
         if self.klass:
             # TODO class_ or class ???
-            ET.SubElement(result, "class_").text = self.klass
+            ET.SubElement(result, "class_").text = self.class_
 
         ET.SubElement(result, "docnumber").text = self.docnumber
 

@@ -2,7 +2,10 @@ import datetime
 import dataclasses
 import re
 
-from .localized_string import LocalizedString
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .localized_string import LocalizedString
 
 
 class RequestError(Exception):
@@ -55,17 +58,6 @@ def lang_filter(target, opts={}):
     return filtered if filtered else target
 
 
-def localized_string(s):
-    if isinstance(s, dict):
-        return LocalizedString(**s)
-    elif isinstance(s, str):
-        return LocalizedString(s)
-    elif isinstance(s, LocalizedString):
-        return s
-    else:
-        ValueError(f"don't know how to convert {type(s)}")
-
-
 def to_ds_instance(klass, fail=False):
     def f(x):
         if isinstance(x, klass):
@@ -79,6 +71,10 @@ def to_ds_instance(klass, fail=False):
         else:
             return x
     return f
+
+
+def localized_string(s):
+    return to_ds_instance(LocalizedString)
 
 
 def delegate(to, *methods):

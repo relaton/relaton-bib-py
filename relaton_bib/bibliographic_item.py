@@ -7,28 +7,37 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, TYPE_CHECKING
 
+from .address import Address
+from .contact import Contact
+from .affiliation import Affiliation
 from .typed_uri import TypedUri
-from .document_identifier import DocumentIdentifier
+from .document_identifier import DocumentIdentifier, DocumentIdType
 from .copyright_association import CopyrightAssociation
 from .formatted_string import FormattedString
-from .contribution_info import ContributionInfo
-from .bibliographic_date import BibliographicDate
+from .contribution_info import ContributionInfo, ContributorRole
+from .bibliographic_date import BibliographicDate, BibliographicDateType
 from .series import Series
 from .document_status import DocumentStatus
-from .organization import Organization
+from .organization import Organization, OrgIdentifier
 from .localized_string import LocalizedString
 from .typed_title_string import TypedTitleString, TypedTitleStringCollection
+from .technical_committee import TechnicalCommittee
 from .formatted_ref import FormattedRef
 from .medium import Medium
 from .classification import Classification
 from .validity import Validity
-from .bib_item_locality import BibItemLocality
+from .bib_item_locality import BibItemLocality, Locality, \
+    BibItemLocalityType, SourceLocalityStack, SourceLocality, LocalityStack
 from .biblio_note import BiblioNote, BiblioNoteCollection
 from .biblio_version import BibliographicItemVersion
 from .place import Place
+from .person import Person, FullName, PersonIdentifier
 from .structured_identifier import StructuredIdentifierCollection
 from .editorial_group import EditorialGroup
 from .ics import ICS
+from .workgroup import WorkGroup
+from .structured_identifier import StructuredIdentifier
+
 
 if TYPE_CHECKING:
     from .document_relation import DocumentRelation
@@ -78,6 +87,8 @@ class BibliographicItem:
     docnumber: str = None
     edition: str = None
     doctype: str = None  # TODO check if Enum type better then str
+    subdoctype: str = None
+    docstatus: DocumentStatus = None
     title: TypedTitleStringCollection = field(default_factory=list)
     link: List[TypedUri] = field(default_factory=list)
     docid: List[DocumentIdentifier] = field(default_factory=list)
@@ -91,7 +102,7 @@ class BibliographicItem:
     status: DocumentStatus = None
     copyright: List[CopyrightAssociation] = field(default_factory=list)
     relation: DocRelationCollection = None
-    series: List[Place] = field(default_factory=list)
+    series: List[Series] = field(default_factory=list)
     medium: Medium = None
     place: List[Place] = field(default_factory=list)
     extent: List[BibItemLocality] = field(default_factory=list)
@@ -105,21 +116,6 @@ class BibliographicItem:
     ics: List[ICS] = field(default_factory=list)
     structuredidentifier: StructuredIdentifierCollection = None
 
-    def __post_init__(self):
-        if self.type and not BibliographicItemType.has_value(self.type):
-            logging.warning(
-                f"[relaton-bib] document type {self.type} is invalid")
-        # TODO
-
-    def to_xml(self, parent, opts={}):
-        name = "bibdata" if opts.get("bibdata") else "bibitem"
-        result = ET.Element(name) if parent is None \
-            else ET.SubElement(parent, name)
-        # TODO continue
-        return result
-
-    def to_asciibib(self, prefix=""):
-        pass
     # @param id [String, NilClass]
     # @param title [RelatonBib::TypedTitleStringCollection,
     #   Array<Hash, RelatonBib::TypedTitleString>]
@@ -249,6 +245,23 @@ class BibliographicItem:
 #       @ics            = args.fetch :ics, []
 #       @structuredidentifier = args[:structuredidentifier]
 #     end
+
+    def __post_init__(self):
+        if self.type and not BibliographicItemType.has_value(self.type):
+            logging.warning(
+                f"[relaton-bib] document type {self.type} is invalid")
+        # TODO
+
+    def to_xml(self, parent, opts={}):
+        name = "bibdata" if opts.get("bibdata") else "bibitem"
+        result = ET.Element(name) if parent is None \
+            else ET.SubElement(parent, name)
+        # TODO continue
+        return result
+
+    def to_asciibib(self, prefix=""):
+        pass
+
 #     # rubocop:enable Metrics/MethodLength, Metrics/AbcSize
 #     # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 

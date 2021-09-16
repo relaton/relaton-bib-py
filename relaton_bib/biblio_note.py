@@ -1,7 +1,7 @@
 import xml.etree.ElementTree as ET
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import List
 
 from .formatted_string import FormattedString
 from .relaton_bib import delegate
@@ -33,7 +33,7 @@ class BiblioNote(FormattedString):
 @delegate("array", "append", "__getitem__", "__len__", "__iter__",
           "__reversed__", "__contains__")
 class BiblioNoteCollection():
-    array: list[BiblioNote]
+    array: List[BiblioNote]
 
     @property
     def first(self):
