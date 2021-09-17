@@ -66,7 +66,7 @@ class StructuredIdentifier:
         for a in self.agency:
             ET.SubElement(result, "agency").text = a
 
-        if self.klass:
+        if self.class_:
             # TODO class_ or class ???
             ET.SubElement(result, "class_").text = self.class_
 
@@ -87,8 +87,8 @@ class StructuredIdentifier:
         out = [f"{pref}docnumber:: {self.docnumber}"]
         for a in self.agency:
             out.append(f"{pref}agency:: {a}")
-        if self.klass:
-            out.append(f"{pref}class:: {self.klass}")
+        if self.class_:
+            out.append(f"{pref}class:: {self.class_}")
 
         for opt_attr in ["type", "partnumber", "edition", "version",
                          "supplementtype", "supplementnumber", "language",
