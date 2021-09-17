@@ -20,11 +20,11 @@ class LocalizedString:
             def reject(x): return not isinstance(x, (LocalizedString, dict))
             inv = list(filter(reject, self.content))
 
-        if not (isinstance(self.content, str)
-                or not inv and any(self.content)):
+        if not self.content or not (isinstance(self.content, str)
+                                    or not inv and any(self.content)):
             print(f"{self.content} {inv}")
             klass = type(inv[0]) if isinstance(self.content, list) \
-                                 else type(self.content)
+                else type(self.content)
             klass = klass.__name__
             raise ValueError(f"invalid LocalizedString content type: {klass}")
 
