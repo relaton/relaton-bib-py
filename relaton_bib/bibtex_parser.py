@@ -3,8 +3,6 @@ from typing import List
 
 import bibtexparser
 import iso639
-# require "iso639" https://pypi.org/project/iso639-lang/ vs https://pypi.org/project/iso-639/
-
 
 from .bibliographic_date import BibliographicDate, BibliographicDateType
 from .bibliographic_item import BibliographicItem, BibliographicItemType
@@ -27,16 +25,9 @@ from .organization import Organization
 def from_bibtex(bibtex: str) -> dict:
     bt = bibtexparser.loads(bibtex)
 
-    print("---")
-    print(bt.entries)
-    print(bt.comments)
-    print(bt.strings)
-    print(bt.preambles)
-    print("---")
-
     return {e["ID"]: BibliographicItem(
         id=e["ID"],
-        docid=_fetch_docid(e),
+        docidentifier=_fetch_docid(e),
         fetched=_fetch_fetched(e),
         type=_fetch_type(e),
         title=_fetch_title(e),

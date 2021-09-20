@@ -17,12 +17,11 @@ class LocalizedString:
     def __post_init__(self):
         inv = []
         if isinstance(self.content, list):
-            def reject(x): return not isinstance(x, (LocalizedString, dict))
+            def reject(x): return not isinstance(x, (LocalizedString, dict, str))
             inv = list(filter(reject, self.content))
 
-        if not self.content or not (isinstance(self.content, str)
-                                    or not inv and any(self.content)):
-            print(f"{self.content} {inv}")
+        if not (isinstance(self.content, str)
+                or not inv and(self.content and any(self.content))):
             klass = type(inv[0]) if isinstance(self.content, list) \
                 else type(self.content)
             klass = klass.__name__

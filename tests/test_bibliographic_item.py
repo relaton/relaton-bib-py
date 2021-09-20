@@ -54,7 +54,7 @@ def subject():
         type=BibliographicItemType.STANDARD,
         doctype="document",
         subdoctype="subdocument",
-        docid=[
+        docidentifier=[
             DocumentIdentifier("TC211", DocumentIdType.ISO),
             DocumentIdentifier("ISBN", "isbn"),
             DocumentIdentifier("LCCN", "lccn"),

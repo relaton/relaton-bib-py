@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET
 from .bibliographic_item import BibliographicItem
 from .formatted_string import FormattedString
 from .bib_item_locality import Locality, LocalityStack, SourceLocality, \
-                               SourceLocalityStack
+    SourceLocalityStack
 
 
 @dataclass
@@ -72,6 +72,7 @@ class DocumentRelation:
         obsoletedBy = "obsoletedBy"
         cited = "cited"
         isCitedIn = "isCitedIn"
+        replace = "replace"  # special type to be replaced
 
         @classmethod
         def has_value(cls, value):
@@ -106,7 +107,7 @@ class DocumentRelation:
         if self.description:
             self.description.to_xml(ET.SubElement(result, "description"))
 
-        self.bibitem.to_xml(result, opts + {"embedded": True})
+        self.bibitem.to_xml(result, {"embedded": True, **opts})
 
         for loc in self.locality:
             loc.to_xml(result)
@@ -114,9 +115,11 @@ class DocumentRelation:
         for loc in self.source_locality:
             loc.to_xml(result)
 
+        return result
+
     def to_asciibib(self, prefix=""):
         pref = f"{prefix}." if prefix else prefix
-        out = [f"{prefix}type:: {self.type}"]
+        out = [f"{pref}type:: {self.type}"]
         if self.description:
             out.append(self.description.to_asciibib(f"{pref}desctiption"))
         if self.bibitem:

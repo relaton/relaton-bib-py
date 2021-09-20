@@ -3,7 +3,7 @@ import datetime
 import logging
 import xml.etree.ElementTree as ET
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, is_dataclass
 from enum import Enum
 from typing import List, TYPE_CHECKING
 
@@ -91,8 +91,9 @@ class BibliographicItem:
     docstatus: DocumentStatus = None
     title: TypedTitleStringCollection = field(default_factory=list)
     link: List[TypedUri] = field(default_factory=list)
-    docid: List[DocumentIdentifier] = field(default_factory=list)
+    docidentifier: List[DocumentIdentifier] = field(default_factory=list)
     date: List[BibliographicDate] = field(default_factory=list)
+    abstract: List[FormattedString] = field(default_factory=list)
     contributor: List[ContributionInfo] = field(default_factory=list)
     version: BibliographicItemVersion = None
     biblionote: BiblioNoteCollection = None
@@ -180,12 +181,14 @@ class BibliographicItem:
     # @param link [Array<Hash, RelatonBib::TypedUri>]
     # @option link [String] :type
     # @option link [String] :content
-#     def initialize(**args)
-#       if args[:type] && !TYPES.include?(args[:type])
-#         warn %{[relaton-bib] document type "#{args[:type]}" is invalid.}
-#       end
-
-#       @title = TypedTitleStringCollection.new(args[:title])
+    def __post_init__(self):
+        if not BibliographicItemType.has_value(self.type):
+            logging.warning(
+                f"[relaton-bib] document type {self.type} is invalid.")
+        if isinstance(self.title, str):
+            self.title = TypedTitleStringCollection([self.title])
+        elif isinstance(self.title, list):
+            self.title = TypedTitleStringCollection(self.title)
 
 #       @date = (args[:date] || []).map do |d|
 #         d.is_a?(Hash) ? BibliographicDate.new(**d) : d
@@ -246,22 +249,6 @@ class BibliographicItem:
 #       @structuredidentifier = args[:structuredidentifier]
 #     end
 
-    def __post_init__(self):
-        if self.type and not BibliographicItemType.has_value(self.type):
-            logging.warning(
-                f"[relaton-bib] document type {self.type} is invalid")
-        # TODO
-
-    def to_xml(self, parent, opts={}):
-        name = "bibdata" if opts.get("bibdata") else "bibitem"
-        result = ET.Element(name) if parent is None \
-            else ET.SubElement(parent, name)
-        # TODO continue
-        return result
-
-    def to_asciibib(self, prefix=""):
-        pass
-
 #     # rubocop:enable Metrics/MethodLength, Metrics/AbcSize
 #     # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
@@ -313,6 +300,12 @@ class BibliographicItem:
 #     # @option opts [Symbol, NilClass] :date_format (:short), :full
 #     # @option opts [String, Symbol] :lang language
 #     # @return [String] XML
+    def to_xml(self, parent, opts={}):
+        name = "bibdata" if opts.get("bibdata") else "bibitem"
+        result = ET.Element(name) if parent is None \
+            else ET.SubElement(parent, name)
+        # TODO continue
+        return result
 #     def to_xml(**opts, &block)
 #       if opts[:builder]
 #         render_xml **opts, &block
@@ -477,69 +470,75 @@ class BibliographicItem:
 
 #     # @param prefix [String]
 #     # @return [String]
-#     def to_asciibib(prefix = "") # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
-#       pref = prefix.empty? ? prefix : prefix + "."
-#       out = prefix.empty? ? "[%bibitem]\n== {blank}\n" : ""
-#       out += "#{pref}id:: #{id}\n" if id
-#       out += "#{pref}fetched:: #{fetched}\n" if fetched
-#       title.each { |t| out += t.to_asciibib(prefix, title.size) }
-#       out += "#{pref}type:: #{type}\n" if type
-#       docidentifier.each do |di|
-#         out += di.to_asciibib prefix, docidentifier.size
-#       end
-#       out += "#{pref}docnumber:: #{docnumber}\n" if docnumber
-#       out += "#{pref}edition:: #{edition}\n" if edition
-#       language.each { |l| out += "#{pref}language:: #{l}\n" }
-#       script.each { |s| out += "#{pref}script:: #{s}\n" }
-#       out += version.to_asciibib prefix if version
-#       biblionote&.each { |b| out += b.to_asciibib prefix, biblionote.size }
-#       out += status.to_asciibib prefix if status
-#       date.each { |d| out += d.to_asciibib prefix, date.size }
-#       abstract.each do |a|
-#         out += a.to_asciibib "#{pref}abstract", abstract.size
-#       end
-#       copyright.each { |c| out += c.to_asciibib prefix, copyright.size }
-#       link.each { |l| out += l.to_asciibib prefix, link.size }
-#       out += medium.to_asciibib prefix if medium
-#       place.each { |pl| out += pl.to_asciibib prefix, place.size }
-#       extent.each { |ex| out += ex.to_asciibib "#{pref}extent", extent.size }
-#       accesslocation.each { |al| out += "#{pref}accesslocation:: #{al}\n" }
-#       classification.each do |cl|
-#         out += cl.to_asciibib prefix, classification.size
-#       end
-#       out += validity.to_asciibib prefix if validity
-#       contributor.each do |c|
-#         out += c.to_asciibib "contributor.*", contributor.size
-#       end
-#       out += relation.to_asciibib prefix if relation
-#       series.each { |s| out += s.to_asciibib prefix, series.size }
-#       out += "#{pref}doctype:: #{doctype}\n" if doctype
-#       out += "#{pref}formattedref:: #{formattedref}\n" if formattedref
-#       keyword.each { |kw| out += kw.to_asciibib "#{pref}keyword", keyword.size }
-#       out += editorialgroup.to_asciibib prefix if editorialgroup
-#       ics.each { |i| out += i.to_asciibib prefix, ics.size }
-#       out += structuredidentifier.to_asciibib prefix if structuredidentifier
-#       out
-#     end
+    def to_asciibib(self, prefix=""):
+        pref = f"{prefix}." if prefix else prefix
+        out = [] if prefix else ["[\%bibitem]", "== \{blank\}"]
 
-#     private
+        # if self.id:
+        #     out.append(f"{pref}id:: {self.id}")
+        # if self.fetched:
+        #     out.append(f"{pref}fetched:: {self.fetched}")
+        # if self.title:
+        #     out += [t.to_asciibib(prefix, len(self.docidentifier))
+        #             for t in self.title]
+        # if self.type:
+        #     out.append(f"{pref}type:: {self.type}")
+        # if self.docidentifier:
+        #     out += [di.to_asciibib(prefix, len(self.docidentifier))
+        #             for di in self.docidentifier]
+        # if self.docnumber:
+        #     out.append(f"{pref}docnumber:: {self.docnumber}")
+        # if self.edition:
+        #     out.append(f"{pref}edition:: {self.edition}")
+        # if self.language:
+        #     out += [f"{pref}language:: {l}" for l in self.language]
+        # if self.script:
+        #     out += [f"{pref}script:: {s}" for s in self.script]
+        # if self.version:
+        #     out.append(self.version.to_asciibib(prefix))
+        # if self.biblionote:
+        #     out += [di.to_asciibib(prefix, len(self.docidentifier))
+        #             for di in self.docidentifier]
 
-#     # @return [String]
-#     def bibtex_title(item)
-#       title.each do |t|
-#         case t.type
-#         when "main" then item.tile = t.title.content
-#         end
-#       end
-#     end
+        order = ["id", "fetched", "title", "type", "docidentifier",
+                 "docnumber", "edition", "language", "script", "version",
+                 "biblionote", "status", "date", "abstract", "copyright",
+                 "link", "medium", "place", "extent", "accesslocation",
+                 "classification", "validity", "contributor", "relation",
+                 "series", "doctype", "formattedref", "keyword",
+                 "editorialgroup", "ics", "structuredidentifier"]
 
-#     # @return [String]
-#     def bibtex_type
-#       case type
-#       when "standard", nil then "misc"
-#       else type
-#       end
-#     end
+        for prop in order:
+            value = getattr(self, prop)
+
+            if hasattr(value, '__iter__'):
+                if len(value) == 0:
+                    continue
+                if is_dataclass(value[0]):
+                    p = prefix
+                    if prop in ["abstract", "extent", "accesslocation",
+                                "keyword"]:
+                        p = f"{pref}{prop}"
+                    elif prop == "contributor":
+                        p = "contributor.*"
+                    out += [v.to_asciibib(p, len(value)) for v in value]
+                else:
+                    out += [f"{pref}{prop}:: {v}" for v in value]
+            elif is_dataclass(value):
+                out.append(value.to_asciibib(prefix))
+            elif value:
+                out.append(f"{pref}{prop}:: {value}")
+
+        return "\n".join(out)
+
+    def _bibtex_title(self, item):
+        for t in self.title:
+            if t.type == TypedTitleString.Type.MAIN:
+                item.tile = t.title.content
+
+    def _bibtex_type(self):
+        if not self.type or self.type == BibliographicItemType.STANDARD:
+            return "misc"
 
 #     # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
 

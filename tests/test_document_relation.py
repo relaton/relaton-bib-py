@@ -1,7 +1,6 @@
 import pytest
 
 import dataclasses
-import inspect
 import logging
 
 import xml.etree.ElementTree as ET
@@ -30,26 +29,23 @@ def test_to_xml(subject):
     host = ET.Element("host")
     result = subject.to_xml(host)
 
-    assert result.attrib["type"] == "type"
-    assert host.find("./classification").text == "value"
+    assert result.attrib["type"] == DocumentRelation.Type.partOf
+    assert host.find("./relation/description") is None
 
 
 def test_to_asciibib(subject):
     result = subject.to_asciibib()
 
-    assert result == inspect.cleandoc("""classification.type:: type
-                                         classification.value:: value""")
+    assert "type:: partOf" in result
 
 
 def test_to_asciibib_with_pref(subject):
-    result = subject.to_asciibib(prefix="test")
+    result = subject.to_asciibib(prefix="tt")
 
-    assert result == inspect.cleandoc("""test.classification.type:: type
-                                         test.classification.value:: value""")
+    assert "tt.type:: partOf" in result
 
 
 def test_hash(subject):
     result = dataclasses.asdict(subject)
 
-    assert result["type"] == "type"
-    assert result["value"] == "value"
+    assert result["type"] == DocumentRelation.Type.partOf
