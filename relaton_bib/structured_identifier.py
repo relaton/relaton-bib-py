@@ -67,8 +67,7 @@ class StructuredIdentifier:
             ET.SubElement(result, "agency").text = a
 
         if self.class_:
-            # TODO class_ or class ???
-            ET.SubElement(result, "class_").text = self.class_
+            ET.SubElement(result, "class").text = self.class_
 
         ET.SubElement(result, "docnumber").text = self.docnumber
 
@@ -77,8 +76,8 @@ class StructuredIdentifier:
             value = getattr(self, opt_attr)
             if value:
                 ET.SubElement(result, opt_attr).text = value
-
-        result.attrib["type"] = self.type
+        if self.type:
+            result.attrib["type"] = self.type
 
         return result
 

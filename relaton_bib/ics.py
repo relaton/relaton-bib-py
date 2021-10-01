@@ -13,7 +13,7 @@ class ICS:
         node = ET.Element(name) if parent is None \
             else ET.SubElement(parent, name)
         ET.SubElement(node, "code").text = self.code
-        ET.SubElement(node, "text_").text = self.text
+        ET.SubElement(node, "text").text = self.text
         return node
 
     def to_asciibib(self, prefix="", count=1):

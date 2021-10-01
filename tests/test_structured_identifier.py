@@ -40,7 +40,7 @@ def test_to_xml(subject):
     assert host.find("./structuredidentifier") is not None
     assert result.attrib["type"] == DocumentIdType.CN_STD.value
     assert len(result.findall("./agency")) == 2
-    assert result.find("./class_").text == "class"
+    assert result.find("./class").text == "class"
     assert result.find("./docnumber").text == "AGNT-007"
     assert result.find("./partnumber").text == "1"
     assert result.find("./edition").text == "2"

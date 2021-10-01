@@ -17,7 +17,7 @@ def test_to_xml(subject):
     subject.to_xml(host)
 
     assert host.find("./ics/code").text == "code"
-    assert host.find("./ics/text_").text == "text"
+    assert host.find("./ics/text").text == "text"
 
 
 def test_to_asciibib(subject):
