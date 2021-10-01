@@ -20,8 +20,8 @@ def test_to_xml(subject):
     result = subject.to_xml(host)
 
     assert host.find("./validity") == result
-    assert result.attrib["validityBegins"] == "2009-01-01 00:00"
-    assert result.attrib["validityEnds"] == "2012-11-28 01:02"
+    assert result.find("./validityBegins").text == "2009-01-01 00:00"
+    assert result.find("./validityEnds").text == "2012-11-28 01:02"
 
 
 def test_to_asciibib(subject):
