@@ -40,7 +40,7 @@ class CopyrightAssociation:
         ET.SubElement(result, "from").text = str(self.from_.year) \
             if self.from_ else "unknown"
         if self.to:
-            ET.SubElement(result, "to").text = self.to
+            ET.SubElement(result, "to").text = str(self.to.year)
         for o in self.owner:
             o.to_xml(ET.SubElement(result, "owner"), opts)
         if self.scope:
