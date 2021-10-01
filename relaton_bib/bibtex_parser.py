@@ -60,12 +60,15 @@ def _fetch_docid(bibtex: dict) \
 
 
 def _fetch_fetched(bibtex: dict) -> datetime.datetime:
+    # TODO replace strptime with https://dateutil.readthedocs.io/en/stable/index.html
+    # to support more formats
     timestamp = bibtex.get("timestamp")
     return datetime.datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S") \
         if timestamp else None
 
 
 def _fetch_type(bibtex: dict) -> str:
+    # todo move all string constants to enums
     t = bibtex.get("type")
     if t in ["mastersthesis", "phdthesis"]:
         return BibliographicItemType.THESIS.value

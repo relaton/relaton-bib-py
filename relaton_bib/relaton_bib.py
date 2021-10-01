@@ -54,7 +54,10 @@ def single_element_array(array):
 
 
 def lang_filter(target, opts={}):
-    filtered = list(filter(lambda t: opts.get("lang") in t.language, target))
+    lang = opts.get("lang")
+    filtered = list(filter(
+        lambda t: t.language and lang in t.language,
+        target))
     return filtered if filtered else target
 
 
@@ -71,10 +74,6 @@ def to_ds_instance(klass, fail=False):
         else:
             return x
     return f
-
-
-def localized_string(s):
-    return to_ds_instance(LocalizedString)
 
 
 def delegate(to, *methods):

@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Union, List, TYPE_CHECKING
+from typing import Union, List
 
 import xml.sax.saxutils as saxutils
 import xml.etree.ElementTree as ET
@@ -17,11 +17,11 @@ class LocalizedString:
     def __post_init__(self):
         inv = []
         if isinstance(self.content, list):
-            def reject(x): return not isinstance(x, (LocalizedString, dict, str))
+            def reject(x):
+                return not isinstance(x, (LocalizedString, dict, str))
             inv = list(filter(reject, self.content))
 
-        if not (isinstance(self.content, str)
-                or not inv and(self.content and any(self.content))):
+        if not (isinstance(self.content, str) or not inv and(self.content and any(self.content))):
             klass = type(inv[0]) if isinstance(self.content, list) \
                 else type(self.content)
             klass = klass.__name__
@@ -36,8 +36,8 @@ class LocalizedString:
 
         if isinstance(self.content, list):
             object.__setattr__(self, "content",
-                               map(to_ds_instance(LocalizedString),
-                                   self.content))
+                               list(map(to_ds_instance(LocalizedString),
+                                   self.content)))
 
     def __str__(self):
         return self.content if isinstance(self.content, str) \

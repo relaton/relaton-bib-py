@@ -6,7 +6,7 @@ from typing import Union
 import logging
 import xml.etree.ElementTree as ET
 
-from .bibliographic_item import BibliographicItem
+from .bibliographic_item import *
 from .formatted_string import FormattedString
 from .bib_item_locality import Locality, LocalityStack, SourceLocality, \
     SourceLocalityStack

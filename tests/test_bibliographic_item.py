@@ -1,7 +1,15 @@
-import pytest
-
+from __future__ import annotations
 import datetime
-from typing import TYPE_CHECKING
+import pytest
+import re
+import os
+import xml.etree.ElementTree as ET
+
+from lxml import etree
+import bibtexparser
+from bibtexparser.bparser import BibTexParser
+
+from . import elements_equal
 
 from relaton_bib.bibliographic_item import BibliographicItem, \
     BibliographicItemType
@@ -15,7 +23,7 @@ from relaton_bib.formatted_string import FormattedString
 from relaton_bib.contribution_info import ContributionInfo, ContributorRole
 from relaton_bib.bibliographic_date import BibliographicDate, \
     BibliographicDateType
-from relaton_bib.series import Series
+from relaton_bib.series import Series, SeriesType
 from relaton_bib.document_status import DocumentStatus
 from relaton_bib.organization import Organization, OrgIdentifier
 from relaton_bib.localized_string import LocalizedString
@@ -39,18 +47,24 @@ from relaton_bib.document_relation_collection import DocRelationCollection
 from relaton_bib.document_relation import DocumentRelation
 from relaton_bib.workgroup import WorkGroup
 from relaton_bib.structured_identifier import StructuredIdentifier
+from relaton_bib.bibtex_parser import from_bibtex
 
 
 @pytest.fixture
-def subject():
+def title() -> TypedTitleStringCollection:
+    result = TypedTitleString.from_string("Geographic information")
+    result.append(TypedTitleString(content="Information géographique",
+                                   language=["fr"],
+                                   script=["Latn"]))
+    return result
+
+
+@pytest.fixture
+def subject(title: TypedTitleStringCollection) -> BibliographicItem:
     return BibliographicItem(
         id="ISOTC211",
-        title=[
-            LocalizedString("Geographic information"),
-            LocalizedString(content="Information géographique",
-                            language="fr",
-                            script="Latn"),
-        ],
+        title=title,
+        fetched=datetime.date(2021, 8, 30),
         type=BibliographicItemType.STANDARD,
         doctype="document",
         subdoctype="subdocument",
@@ -66,17 +80,18 @@ def subject():
         docnumber="123456",
         edition="1",
         language=["en", "fr"],
-        script="Latn",
+        script=["Latn"],
         version=BibliographicItemVersion(revision_date="2019-04-01",
                                          draft=["draft"]),
         biblionote=BiblioNoteCollection([
+            BiblioNote(content="note"),
             BiblioNote(content="An note", type="annote"),
             BiblioNote(content="How published", type="howpublished"),
             BiblioNote(content="Comment", type="comment"),
             BiblioNote(content="Table Of Contents", type="tableOfContents"),
 
         ]),
-        docstatus=DocumentStatus(
+        status=DocumentStatus(
             stage=DocumentStatus.Stage(value="30", abbreviation="CD"),
             substage=DocumentStatus.Stage(value="substage"),
             iteration="final"
@@ -90,12 +105,6 @@ def subject():
                 type=BibliographicDateType.ACCESSED, on="2015-05-20")
         ],
         abstract=[
-            FormattedString(
-                content="ISO 19115-1:2014 defines the schema required for ...",
-                language="en",
-                script="Latn",
-                format="text/plain"
-            ),
             FormattedString(
                 content="ISO 19115-1:2014 defines the schema required for ...",
                 language="en",
@@ -119,7 +128,8 @@ def subject():
                 entity=Organization(
                     name="International Organization for Standardization",
                     abbreviation="ISO",
-                    subdivision="division")
+                    subdivision=[LocalizedString("division")],
+                    uri="www.iso.org")
             ),
             ContributionInfo(
                 role=[ContributorRole(type="author")],
@@ -128,20 +138,20 @@ def subject():
                         content="A. Bierman",
                         language="en",
                         script="Latn")),
-                    affiliation=Affiliation(Organization(
+                    affiliation=[Affiliation(Organization(
                         name="IETF",
                         abbreviation="IETF",
-                        identifier=OrgIdentifier(
+                        identifier=[OrgIdentifier(
                             type="uri",
-                            value="www.ietf.org")
-                    )),
+                            value="www.ietf.org")]
+                    ))],
                     contact=[
                         Address(
                             street=["Street"],
                             city="City",
-                            postcode="123456",
+                            state="State",
                             country="Country",
-                            state="State"),
+                            postcode="123456"),
                         Contact(type="phone", value="223322")
                     ]
                 )
@@ -150,7 +160,8 @@ def subject():
                 role=[
                     ContributorRole(
                         type="publisher",
-                        description=[FormattedString("Publisher descr")]),
+                        description=[FormattedString(
+                            "Publisher description")]),
                     ContributorRole(
                         type="editor",
                         description=[FormattedString("Editor description")])
@@ -158,33 +169,32 @@ def subject():
                 entity=Organization(
                     name="IETF",
                     abbreviation="IETF",
-                    identifier=OrgIdentifier(
+                    identifier=[OrgIdentifier(
                         type="uri",
-                        value="www.ietf.org"))
+                        value="www.ietf.org")])
             ),
             ContributionInfo(
                 role=[ContributorRole(type="author")],
                 entity=Person(
                     name=FullName(
-                        completename=LocalizedString(
-                            content="A. Bierman",
+                        initial=[LocalizedString(content="A.",
+                            language="en", script="Latn")],
+                        surname=LocalizedString(content="Bierman",
                             language="en", script="Latn"),
-                        initial="A.",
-                        surname="Bierman",
-                        forename="Forename",
-                        addition="Addition",
-                        prefix="Prefix"),
-                    affiliation=Affiliation(
+                        forename=[LocalizedString(content="Forename",
+                            language="en", script="Latn")],
+                        addition=[LocalizedString(content="Addition",
+                            language="en", script="Latn")],
+                        prefix=[LocalizedString(content="Prefix",
+                            language="en", script="Latn")]),
+                    affiliation=[Affiliation(
                         organization=Organization(
                             name="IETF",
-                            abbreviation="IETF",
-                            identifier=OrgIdentifier(
-                                type="uri",
-                                value="www.ietf.org")),
-                        description=FormattedString(
+                            abbreviation="IETF"),
+                        description=[FormattedString(
                             content="Description",
-                            language="en")
-                    ),
+                            language="en")]
+                    )],
                     contact=[
                         Address(
                             street=["Street"],
@@ -194,9 +204,9 @@ def subject():
                             state="State"),
                         Contact(type="phone", value="223322")
                     ],
-                    identifier=PersonIdentifier(
+                    identifier=[PersonIdentifier(
                         type="uri",
-                        value="www.person.com")
+                        value="www.person.com")]
                 )
             ),
             ContributionInfo(
@@ -211,9 +221,7 @@ def subject():
                 Organization(
                     name="International Organization for Standardization",
                     abbreviation="ISO",
-                    identifier=OrgIdentifier(
-                        type="uri",
-                        value="www.ietf.org")))],
+                    uri="www.iso.org"))],
             from_="2014",
             to="2020",
             scope="Scope"
@@ -225,8 +233,8 @@ def subject():
                      content="https://www.iso.org/obp/ui/#!iso:std:53798:en"),
             TypedUri(
                 type="rss",
-                content="https://www.iso.org/contents/data/standard/05/37/53798\
-                         .detail.rss"),
+                content="https://www.iso.org/contents/data/standard/05/37/"
+                        "53798.detail.rss"),
             TypedUri(type="doi", content="http://standrd.org/doi-123"),
             TypedUri(type="file", content="file://path/file"),
         ],
@@ -264,12 +272,12 @@ def subject():
                 type=DocumentRelation.Type.partOf,
                 bibitem=BibliographicItem(
                     title=TypedTitleStringCollection(
-                        [TypedTitleString(type="main", content="Book title")]))
+                        [TypedTitleString(type=TypedTitleString.Type.MAIN, content="Book title")]))
             )
         ]),
         series=[
             Series(
-                type="main",
+                type=SeriesType.MAIN,
                 title=TypedTitleString(
                     type="original",
                     content="ISO/IEC FDIS 10118-3",
@@ -333,10 +341,10 @@ def subject():
         accesslocation=["accesslocation1", "accesslocation2"],
         classification=[
             Classification(type="type", value="value"),
-            Classification("keyword", "Keywords"),
-            Classification("mendeley", "Mendeley Tags")
+            Classification("Keywords", "keyword"),
+            Classification("Mendeley Tags", "mendeley")
         ],
-        keyword=["Keyword", "Key Word"],
+        keyword=[LocalizedString("Keyword"), LocalizedString("Key Word")],
         license=["License"],
         validity=Validity(
             begins=datetime.datetime.strptime("2010-10-10 12:21",
@@ -349,14 +357,14 @@ def subject():
         editorialgroup=EditorialGroup([
             TechnicalCommittee(
                 WorkGroup(
-                    content="Editorial group",
+                    name="Editorial group",
                     number=1,
                     type="Type",
-                    # identifier="Identifier",
-                    # prefix="Prefix"
+                    identifier="Identifier",
+                    prefix="Prefix"
                 ))
         ]),
-        ics=ICS(code="01", text="First"),
+        ics=[ICS(code="01", text="First")],
         structuredidentifier=StructuredIdentifierCollection([
             StructuredIdentifier(
                 type="type 1",
@@ -375,158 +383,166 @@ def subject():
     )
 
 
-def test_subject_created(subject):
+def test_subject_created(subject: BibliographicItem):
     assert type(subject) == BibliographicItem
 
-# RSpec.describe "RelatonBib" => :BibliographicItem do
-#   context "instance" do
-#     subject do
-#       hash = YAML.load_file "spec/examples/bib_item.yml"
-#       hash_bib = RelatonBib::HashConverter.hash_to_bib hash
 
-#       RelatonBib::BibliographicItem.new(**hash_bib)
-#     end
+def test_titles(subject: BibliographicItem):
+    assert type(subject.title) == TypedTitleStringCollection
+    assert subject.title_for_lang("fr")[0].title.content == \
+        "Information g\u00E9ographique"
 
-#     it "is instance of BibliographicItem" do
-#       expect(subject).to be_instance_of RelatonBib::BibliographicItem
-#     end
 
-#     it "has array of titiles" do
-#       expect(subject.title).to be_instance_of(
-#         RelatonBib::TypedTitleStringCollection
-#       )
-#       expect(subject.title(lang: "fr")[0].title.content).to eq(
-#         "Information g\u00E9ographique"
-#       )
-#     end
+def test_urls(subject: BibliographicItem):
+    assert subject.url() == "https://www.iso.org/standard/53798.html"
+    assert subject.url("rss") \
+        == "https://www.iso.org/contents/data/standard/05/37/53798.detail.rss"
 
-#     it "has urls" do
-#       expect(subject.url).to eq "https://www.iso.org/standard/53798.html"
-#       expect(subject.url(:rss)).to eq "https://www.iso.org/contents/data/"\
-#                                           "standard/05/37/53798.detail.rss"
-#     end
-#     it "returns shortref" do
-#       expect(subject.shortref(subject.docidentifier.first)).to eq "TC211:2014"
-#     end
 
-#     it "returns abstract with en language" do
-#       expect(subject.abstract(lang: "en")).to be_instance_of(
-#         RelatonBib::FormattedString
-#       )
-#     end
+def test_shortref(subject: BibliographicItem):
+    assert subject.shortref(subject.docidentifier[0]) == "TC211:2014"
 
-#     it "to most recent reference" do
-#       item = subject.to_most_recent_reference
-#       expect(item.relation[3].bibitem.structuredidentifier[0].year).to eq "2020"
-#       expect(item.structuredidentifier[0].year).to be_nil
-#     end
 
-#     it "to all parts" do
-#       item = subject.to_all_parts
-#       expect(item).to_not be subject
-#       expect(item.all_parts).to be true
-#       expect(item.relation.last.type).to eq "instance"
-#       expect(item.title.detect { |t| t.type == "title-part" }). to be_nil
-#       expect(item.title.detect { |t| t.type == "main" }.title.content).to eq(
-#         "Geographic information"
-#       )
-#       expect(item.abstract).to be_empty
-#       expect(item.docidentifier.detect { |d| d.id =~ /-\d/ }).to be_nil
-#       expect(item.docidentifier.reject { |d| d.id =~ %r{(all parts)} }.size)
-#         .to eq 1
-#       expect(item.docidentifier.detect { |d| d.id =~ /:[12]\d\d\d/ }).to be_nil
-#       expect(item.structuredidentifier.detect { |d| !d.partnumber.nil? })
-#         .to be_nil
-#       expect(item.structuredidentifier.detect { |d| d.docnumber =~ /-\d/ })
-#         .to be_nil
-#       expect(
-#         item.structuredidentifier.detect { |d| d.docnumber !~ %r{(all parts)} }
-#       ).to be_nil
-#       expect(
-#         item.structuredidentifier.detect { |d| d.docnumber =~ /:[12]\d\d\d/ }
-#       ).to be_nil
-#     end
+def test_abstract(subject: BibliographicItem):
+    assert isinstance(subject.abstract_for_lang("en"), FormattedString)
 
-#     it "returns bibitem xml string" do
-#       file = "spec/examples/bib_item.xml"
-#       subject_xml = subject.to_xml
-#       File.write file, subject_xml, encoding: "utf-8" unless File.exist? file
-#       xml = File.read(file, encoding: "utf-8").gsub(
-#         /<fetched>\d{4}-\d{2}-\d{2}/, "<fetched>#{Date.today}"
-#       )
-#       expect(subject_xml).to be_equivalent_to xml
-#       schema = Jing.new "grammars/biblio.rng"
-#       errors = schema.validate file
-#       expect(errors).to eq []
-#     end
 
-#     it "returns bibdata xml string" do
-#       file = "spec/examples/bibdata_item.xml"
-#       subject_xml = subject.to_xml bibdata: true
-#       File.write file, subject_xml, encoding: "utf-8" unless File.exist? file
-#       xml = File.read(file, encoding: "utf-8").gsub(
-#         /<fetched>\d{4}-\d{2}-\d{2}/, "<fetched>#{Date.today}"
-#       )
-#       expect(subject_xml).to be_equivalent_to xml
-#       schema = Jing.new "spec/examples/isobib.rng"
-#       errors = schema.validate file
-#       expect(errors).to eq []
-#     end
+def test_to_most_recent_reference(subject: BibliographicItem):
+    item = subject.to_most_recent_reference()
+    assert item.relation[3].bibitem.structuredidentifier[0].year == "2020"
+    assert item.structuredidentifier[0].year is None
 
-#     it "render only French laguage tagged string" do
-#       file = "spec/examples/bibdata_item_fr.xml"
-#       xml = subject.to_xml bibdata: true, lang: "fr"
-#       File.write file, xml, encoding: "UTF-8" unless File.exist? file
-#       expect(xml).to be_equivalent_to File.read(file, encoding: "UTF-8")
-#         .sub /(?<=<fetched>)\d{4}-\d{2}-\d{2}/, Date.today.to_s
-#     end
 
-#     it "render addition elements" do
-#       xml = subject.to_xml { |b| b.element "test" }
-#       expect(xml).to include "<element>test</element>"
-#     end
+def test_to_all_parts(subject: BibliographicItem):
+    item = subject.to_all_parts()
+    assert item != subject
+    assert item.all_parts
+    assert item.relation[-1].type == DocumentRelation.Type.instance
+    assert next(
+        (t for t in item.title if t.type == TypedTitleString.Type.TPART),
+        None) is None
+    assert next(
+        (t.title.content for t in item.title if t.type == TypedTitleString.Type.MAIN),
+        None) == "Geographic information"
+    assert len(item.abstract) == 0
+    assert next(
+        (d for d in item.docidentifier if re.match(r"-\d", d.id)),
+        None) is None
+    assert len([d for d in item.docidentifier if "(all parts)" not in d.id]) == 1
+    assert next(
+        (d for d in item.docidentifier if re.match(r":[12]\d\d\d", d.id)),
+        None) is None
+    assert next(
+        (si for si in item.structuredidentifier if si.partnumber),
+        None) is None
+    assert next(
+        (si for si in item.structuredidentifier
+            if re.match(r"-\d", si.docnumber)),
+        None) is None
+    assert next(
+        (si for si in item.structuredidentifier
+            if "(all parts)" not in si.docnumber),
+        None) is None
+    assert next(
+        (si for si in item.structuredidentifier
+            if re.match(r":[12]\d\d\d", si.docnumber)),
+        None) is None
 
-#     it "add note to xml" do
-#       xml = subject.to_xml note: [{ text: "Note", type: "note" }]
-#       expect(xml).to include "<note format=\"text/plain\" type=\"note\">"\
-#       "Note</note>"
-#     end
 
-#     it "deals with hashes" do
-#       file = "spec/examples/bib_item.yml"
-#       h = RelatonBib::HashConverter.hash_to_bib(YAML.load_file(file))
-#       b = RelatonBib::BibliographicItem.new(**h)
-#       expect(b.to_xml).to be_equivalent_to subject.to_xml
-#     end
+def test_bibitem_xml_string(subject: BibliographicItem):
+    file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        "examples",
+                        "bib_item.xml")
+    tree = ET.parse(file)
+    reference = tree.getroot()
 
-#     it "converts item to hash" do
-#       hash = subject.to_hash
-#       file = "spec/examples/hash.yml"
-#       File.write file, hash.to_yaml unless File.exist? file
-#       h = YAML.load_file(file)
-#       h["fetched"] = Date.today.to_s
-#       expect(hash).to eq h
-#       expect(hash["revdate"]).to eq "2019-04-01"
-#     end
+    subject_xml = subject.to_xml()
+    assert elements_equal(reference, subject_xml)
 
-#     context "converts to BibTex" do
-#       it "standard" do
-#         bibtex = subject.to_bibtex
-#         file = "spec/examples/misc.bib"
-#         File.write(file, bibtex, encoding: "utf-8") unless File.exist? file
-#         expect(bibtex).to eq File.read(file, encoding: "utf-8")
-#           .sub(/(?<=timestamp = {)\d{4}-\d{2}-\d{2}/, Date.today.to_s)
-#       end
+    tree = etree.parse(file)
+    relaxng_document = etree.parse(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)),
+        "../grammars/biblio.rng"))
+    xml_document = etree.fromstring(ET.tostring(subject_xml))
+    relaxng_processor = etree.RelaxNG(relaxng_document)
+    assert relaxng_processor.validate(xml_document)
 
-#       it "techreport" do
-#         expect(subject).to receive(:type).and_return("techreport")
-#           .at_least :once
-#         bibtex = subject.to_bibtex
-#         file = "spec/examples/techreport.bib"
-#         File.write(file, bibtex, encoding: "utf-8") unless File.exist? file
-#         expect(bibtex).to eq File.read(file, encoding: "utf-8")
-#           .sub(/(?<=timestamp = {)\d{4}-\d{2}-\d{2}/, Date.today.to_s)
-#       end
+
+def test_bibdata_xml_string(subject: BibliographicItem):
+    file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        "examples",
+                        "bibdata_item.xml")
+    tree = ET.parse(file)
+    reference = tree.getroot()
+
+    subject_xml = subject.to_xml(opts={"bibdata": True})
+    assert elements_equal(reference, subject_xml)
+
+    tree = etree.parse(file)
+    relaxng_document = etree.parse(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)),
+        "examples/isobib.rng"))
+    xml_document = etree.fromstring(ET.tostring(subject_xml))
+    relaxng_processor = etree.RelaxNG(relaxng_document)
+    assert relaxng_processor.validate(xml_document)
+
+
+def test_render_only_fr_lang_tagged_string(subject: BibliographicItem):
+    file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        "examples",
+                        "bibdata_item_fr.xml")
+    tree = ET.parse(file)
+    reference = tree.getroot()
+    
+    subject_xml = subject.to_xml(opts={"bibdata": True, "lang": "fr"})
+    assert elements_equal(reference, subject_xml)
+
+
+def test_render_addition_elements(subject: BibliographicItem):
+    def block(node, _):
+        ET.SubElement(node, "element").text = "test"
+    xml = subject.to_xml(opts={"lambda": block})
+    assert b"<element>test</element>" in ET.tostring(xml)
+
+
+def test_add_note_to_xml(subject: BibliographicItem):
+    opts = {"note": [{ "text": "Note", "type": "note" }]}
+    xml = subject.to_xml(opts=opts)
+    assert b"<note format=\"text/plain\" type=\"note\">Note</note>" in ET.tostring(xml)
+
+
+def test_to_bibtex_standard(subject: BibliographicItem):
+    subject.fetched = datetime.datetime(2020, 2, 13)
+    bibtex = subject.to_bibtex()
+
+    # misc_compat.bib Created from misc.bib fith few difference in month and author
+    file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        "examples",
+                        "misc_compat.bib")
+    # parser = BibTexParser()
+    # parser.ignore_nonstandard_types = False
+    # parser.homogenize_fields = False
+    # parser.common_strings = False
+    # expected = bibtexparser.load(open(file, 'r'), parser)
+    # expected = from_bibtex(open(file, 'r').read())
+    # parser = BibTexParser()
+    # parser.ignore_nonstandard_types = False
+    # parser.homogenize_fields = False
+    # parser.common_strings = False
+    # actual = bibtexparser.loads(bibtex, parser)
+
+    assert bibtex == open(file, 'r').read()
+
+
+def test_techreport(subject):
+    subject.fetched = datetime.datetime(2020, 2, 13)
+    subject.type = BibliographicItemType.TECHREPORT.value
+    bibtex = subject.to_bibtex()
+
+    file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        "examples",
+                        "techreport_compat.bib")
+    assert bibtex == open(file, 'r').read()
 
 #       it "manual" do
 #         expect(subject).to receive(:type).and_return("manual").at_least :once
@@ -588,6 +604,36 @@ def test_subject_created(subject):
 #       expect(copy.owner).to eq owner
 #     end
 #   end
+
+
+
+# FIXME MOVE TO hash_converter tests
+# RSpec.describe "RelatonBib" => :BibliographicItem do
+#   context "instance" do
+#     subject do
+#       hash = YAML.load_file "spec/examples/bib_item.yml"
+#       hash_bib = RelatonBib::HashConverter.hash_to_bib hash
+
+#       RelatonBib::BibliographicItem.new(**hash_bib)
+#     end
+
+#     it "deals with hashes" do
+#       file = "spec/examples/bib_item.yml"
+#       h = RelatonBib::HashConverter.hash_to_bib(YAML.load_file(file))
+#       b = RelatonBib::BibliographicItem.new(**h)
+#       expect(b.to_xml).to be_equivalent_to subject.to_xml
+#     end
+
+#     it "converts item to hash" do
+#       hash = subject.to_hash
+#       file = "spec/examples/hash.yml"
+#       File.write file, hash.to_yaml unless File.exist? file
+#       h = YAML.load_file(file)
+#       h["fetched"] = Date.today.to_s
+#       expect(hash).to eq h
+#       expect(hash["revdate"]).to eq "2019-04-01"
+#     end
+
 
 #   private
 
