@@ -12,8 +12,8 @@ class BiblioNote(FormattedString):
     type: str = None
 
     def to_xml(self, parent=None):
-        name = "node"
-        node = ET.Element("node")if parent is None \
+        name = "note"
+        node = ET.Element(name) if parent is None \
             else ET.SubElement(parent, name)
         super().to_xml(node)
         if self.type:
@@ -32,7 +32,7 @@ class BiblioNote(FormattedString):
 @dataclass
 @delegate("array", "append", "__getitem__", "__len__", "__iter__",
           "__reversed__", "__contains__")
-class BiblioNoteCollection():
+class BiblioNoteCollection:
     array: List[BiblioNote]
 
     @property
