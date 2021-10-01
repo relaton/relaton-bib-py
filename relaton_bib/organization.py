@@ -1,15 +1,13 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Union, TYPE_CHECKING
-
+from typing import List
 import re
 import logging
 import xml.etree.ElementTree as ET
 
 from .localized_string import LocalizedString
-from .formatted_string import FormattedString
-from .relaton_bib import lang_filter, localized_string
+from .relaton_bib import lang_filter, to_ds_instance
 from .contributor import Contributor
 
 
@@ -63,13 +61,14 @@ class Organization(Contributor):
         if isinstance(self.name, str):
             self.name = [LocalizedString(self.name)]
         elif isinstance(self.name, List):
-            self.name = list(map(localized_string, self.name))
+            self.name = list(map(to_ds_instance(LocalizedString), self.name))
 
         if isinstance(self.abbreviation, str):
             self.abbreviation = LocalizedString(self.abbreviation)
 
         if isinstance(self.subdivision, List):
-            self.subdivision = list(map(localized_string, self.subdivision))
+            self.subdivision = list(map(to_ds_instance(LocalizedString),
+                                        self.subdivision))
 
     def to_xml(self, parent, opts={}):
         name = "organization"
@@ -107,3 +106,6 @@ class Organization(Contributor):
         if parent:
             out.append()
         return "\n".join(out)
+
+    def bib_name(self) -> str:
+        return str(self.name[0]) if len(self.name) > 0 else None

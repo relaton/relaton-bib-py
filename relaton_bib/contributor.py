@@ -32,3 +32,6 @@ class Contributor:
         for c in cont:
             out.append(c.to_asciibib(prefix, len(cont)))
         return "\n".join(out)
+
+    def bib_name(self) -> str:
+        raise NotImplementedError()
