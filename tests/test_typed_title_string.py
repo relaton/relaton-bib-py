@@ -4,7 +4,8 @@ import pytest
 
 import xml.etree.ElementTree as ET
 
-from relaton_bib.typed_title_string import TypedTitleString
+from relaton_bib.typed_title_string import TypedTitleString, \
+    TypedTitleStringCollection
 from relaton_bib.formatted_string import FormattedString
 
 
@@ -17,7 +18,7 @@ def test_missing_title_or_content():
 @pytest.fixture
 def subject():
     return TypedTitleString(
-        type="main",
+        type=TypedTitleString.Type.MAIN,
         title=FormattedString(content="Title", format=None)
     )
 
@@ -113,3 +114,15 @@ def test_with_extra_part():
     assert t[2].type == TypedTitleString.Type.TPART
     assert t[3].title.content == "Intro - Main - Part 1: -- Extra"
     assert t[3].type == TypedTitleString.Type.MAIN
+
+
+def test_filter_collection(subject):
+    c = TypedTitleStringCollection([])
+    assert len(c) == 0
+    c.append(subject)
+    assert len(c) == 1
+    r = TypedTitleStringCollection(filter(lambda t: t.type == "some", c))
+    assert len(r) == 0
+    r = TypedTitleStringCollection(
+        filter(lambda t: t.type == TypedTitleString.Type.MAIN, c))
+    assert len(r) == 1
