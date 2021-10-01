@@ -12,7 +12,7 @@ from .person import Person
 from .organization import Organization
 
 
-class ContributorRoleType(Enum):
+class ContributorRoleType(str, Enum):
     AUTHOR = "author"
     PERFORMER = "performer"
     PUBLISHER = "publisher"
@@ -78,7 +78,6 @@ class ContributionInfo:
             self.role.append(ContributorRole(type=role_type.value))
 
     def to_xml(self, parent, opts={}):
-        # NOTE role don't marshaled to XML as in original ruby code
         return self.entity.to_xml(parent, opts)
 
     def to_asciibib(self, prefix="", count=1):
