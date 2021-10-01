@@ -2,6 +2,7 @@ import datetime
 from typing import List
 
 import bibtexparser
+from bibtexparser.bparser import BibTexParser
 import iso639
 
 from .bibliographic_date import BibliographicDate, BibliographicDateType
@@ -23,7 +24,8 @@ from .organization import Organization
 
 
 def from_bibtex(bibtex: str) -> dict:
-    bt = bibtexparser.loads(bibtex)
+    parser = BibTexParser(common_strings=True)
+    bt = bibtexparser.loads(bibtex, parser)
 
     return {e["ID"]: BibliographicItem(
         id=e["ID"],
