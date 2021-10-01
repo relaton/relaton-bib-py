@@ -99,7 +99,7 @@ class LocalityStack:
 class SourceLocality(BibItemLocality):
     def to_xml(self, parent):
         node = ET.SubElement(parent, "sourceLocality")
-        super.to_xml(node)
+        super().to_xml(node)
         return node
 
 
