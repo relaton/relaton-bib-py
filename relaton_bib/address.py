@@ -19,9 +19,9 @@ class Address:
         for st in self.street:
             ET.SubElement(result, "street").text = st
         ET.SubElement(result, "city").text = self.city
-        ET.SubElement(result, "country").text = self.country
         if self.state:
             ET.SubElement(result, "state").text = self.state
+        ET.SubElement(result, "country").text = self.country
         if self.postcode:
             ET.SubElement(result, "postcode").text = self.postcode
         return result
