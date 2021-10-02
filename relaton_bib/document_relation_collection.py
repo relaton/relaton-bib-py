@@ -13,13 +13,9 @@ class DocRelationCollection:
     array: List[DocumentRelation]
 
     def __post_init__(self):
-        self.delegates = [("array", "__getitem__", "append",
-                           "__len__", "__iter__", "__reversed__",
-                           "__contains__")]
-
-        self.array = map(
+        self.array = list(map(
             lambda r: DocumentRelation(**r) if isinstance(r, dict) else r,
-            self.array)
+            self.array))
 
     @property
     def first(self):
@@ -44,8 +40,8 @@ class DocRelationCollection:
         return parent
 
     def replaces(self):
-        return DocRelationCollection(filter(lambda r: r.type == "replace",
-                                            self.array))
+        return DocRelationCollection(filter(
+            lambda r: r.type == DocumentRelation.Type.replace, self.array))
 
     def to_asciibib(self, prefix=""):
         pref = f"{prefix}.relation" if prefix else "relation"

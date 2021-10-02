@@ -51,7 +51,7 @@ class DocumentIdentifier:
 
     def to_xml(self, parent, opts={}):
         lang = opts.get("lang")
-        lid_re = fr"(?<=:)(?:\w{2},)*?({lang})(?:,\w{2})*"
+        lid_re = fr"(?<=:)(?:\w\w,)*?({lang})(?:,\w\w)*"
         lid = re.sub(lid_re, r"\1", self.id) \
             if self.type == DocumentIdType.URN and lang else self.id
 

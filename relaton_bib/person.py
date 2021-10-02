@@ -6,10 +6,14 @@ from typing import List
 import re
 import xml.etree.ElementTree as ET
 
-from .relaton_bib import lang_filter, localized_string
+from .relaton_bib import lang_filter, to_ds_instance
 from .localized_string import LocalizedString
 from .affiliation import Affiliation
 from .contributor import Contributor
+
+
+def localized_string():
+    return to_ds_instance(LocalizedString)
 
 
 @dataclass
@@ -34,22 +38,22 @@ class FullName:
         if isinstance(self.forename, str):
             self.forename = [LocalizedString(self.forename)]
         elif isinstance(self.forename, List):
-            self.forename = list(map(localized_string, self.forename))
+            self.forename = list(map(localized_string(), self.forename))
 
         if isinstance(self.initial, str):
             self.initial = [LocalizedString(self.initial)]
         elif isinstance(self.initial, List):
-            self.initial = list(map(localized_string, self.initial))
+            self.initial = list(map(localized_string(), self.initial))
 
         if isinstance(self.addition, str):
             self.addition = [LocalizedString(self.addition)]
         elif isinstance(self.addition, List):
-            self.addition = list(map(localized_string, self.addition))
+            self.addition = list(map(localized_string(), self.addition))
 
         if isinstance(self.prefix, str):
             self.prefix = [LocalizedString(self.prefix)]
         elif isinstance(self.prefix, List):
-            self.prefix = list(map(localized_string, self.prefix))
+            self.prefix = list(map(localized_string(), self.prefix))
 
     def to_xml(self, parent, opts={}):
         name = "name"
@@ -158,3 +162,6 @@ class Person(Contributor):
             out.append(i.to_asciibib(pref, len(self.identifier)))
         out.append(super().to_asciibib(pref))
         return "\n".join([l for l in out if l])
+
+    def bib_name(self) -> str:
+        return str(self.name.completename)

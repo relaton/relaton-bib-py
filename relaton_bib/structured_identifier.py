@@ -49,7 +49,7 @@ class StructuredIdentifier:
     agency: List[str] = field(default_factory=list)
 
     type: str = None
-    klass: str = None
+    class_: str = None
     partnumber: str = None
     edition: str = None
     version: str = None
@@ -66,9 +66,8 @@ class StructuredIdentifier:
         for a in self.agency:
             ET.SubElement(result, "agency").text = a
 
-        if self.klass:
-            # TODO class_ or class ???
-            ET.SubElement(result, "class_").text = self.klass
+        if self.class_:
+            ET.SubElement(result, "class").text = self.class_
 
         ET.SubElement(result, "docnumber").text = self.docnumber
 
@@ -77,8 +76,8 @@ class StructuredIdentifier:
             value = getattr(self, opt_attr)
             if value:
                 ET.SubElement(result, opt_attr).text = value
-
-        result.attrib["type"] = self.type
+        if self.type:
+            result.attrib["type"] = self.type
 
         return result
 
@@ -87,8 +86,8 @@ class StructuredIdentifier:
         out = [f"{pref}docnumber:: {self.docnumber}"]
         for a in self.agency:
             out.append(f"{pref}agency:: {a}")
-        if self.klass:
-            out.append(f"{pref}class:: {self.klass}")
+        if self.class_:
+            out.append(f"{pref}class:: {self.class_}")
 
         for opt_attr in ["type", "partnumber", "edition", "version",
                          "supplementtype", "supplementnumber", "language",

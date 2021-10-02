@@ -10,7 +10,7 @@ from relaton_bib.technical_committee import TechnicalCommittee
 
 @pytest.fixture
 def subject():
-    return TechnicalCommittee(WorkGroup(content="value",
+    return TechnicalCommittee(WorkGroup(name="value",
                                         number=1,
                                         type="type"))
 
@@ -28,7 +28,7 @@ def test_to_asciibib(subject):
     result = subject.to_asciibib()
 
     assert result == inspect.cleandoc(
-        """technical_committee.content:: value
+        """technical_committee.name:: value
            technical_committee.number:: 1
            technical_committee.type:: type""")
 
@@ -37,7 +37,7 @@ def test_to_asciibib_with_pref(subject):
     result = subject.to_asciibib(prefix="a")
 
     assert result == inspect.cleandoc(
-        """a.technical_committee.content:: value
+        """a.technical_committee.name:: value
            a.technical_committee.number:: 1
            a.technical_committee.type:: type""")
 
@@ -47,4 +47,4 @@ def test_hash(subject):
 
     assert result["workgroup"]["type"] == "type"
     assert result["workgroup"]["number"] == 1
-    assert result["workgroup"]["content"] == "value"
+    assert result["workgroup"]["name"] == "value"

@@ -5,6 +5,8 @@ from typing import Union, List
 import xml.sax.saxutils as saxutils
 import xml.etree.ElementTree as ET
 
+from .relaton_bib import to_ds_instance
+
 
 @dataclass(frozen=True)
 class LocalizedString:
@@ -13,15 +15,15 @@ class LocalizedString:
     script: List[str] = field(default_factory=list)
 
     def __post_init__(self):
-        inv = None
+        inv = []
         if isinstance(self.content, list):
-            def reject(x): return not isinstance(x, (LocalizedString, dict))
+            def reject(x):
+                return not isinstance(x, (LocalizedString, dict, str))
             inv = list(filter(reject, self.content))
 
-        if not (isinstance(self.content, str)
-                or inv and any(self.content)):
+        if not (isinstance(self.content, str) or not inv and(self.content and any(self.content))):
             klass = type(inv[0]) if isinstance(self.content, list) \
-                                 else type(self.content)
+                else type(self.content)
             klass = klass.__name__
             raise ValueError(f"invalid LocalizedString content type: {klass}")
 
@@ -33,16 +35,9 @@ class LocalizedString:
             object.__setattr__(self, "script", [self.script])
 
         if isinstance(self.content, list):
-            def dict_to_loc_str(c):
-                if isinstance(c, dict):
-                    return LocalizedString(c.get("content"),
-                                           c.get("language"),
-                                           c.get("script"))
-                else:
-                    return c
-
             object.__setattr__(self, "content",
-                               map(dict_to_loc_str, self.content))
+                               list(map(to_ds_instance(LocalizedString),
+                                   self.content)))
 
     def __str__(self):
         return self.content if isinstance(self.content, str) \
@@ -66,7 +61,6 @@ class LocalizedString:
                 node.attrib["language"] = ",".join(filter(None, self.language))
             if any(self.script):
                 node.attrib["script"] = ",".join(filter(None, self.script))
-            # TODO do we really need double encoding for content
             node.text = saxutils.escape(self.content)
 
         return node

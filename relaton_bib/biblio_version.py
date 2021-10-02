@@ -1,12 +1,12 @@
 import xml.etree.ElementTree as ET
 
 from dataclasses import dataclass, field
-from typing import Optional, List
+from typing import List
 
 
 @dataclass
 class BibliographicItemVersion:
-    revision_date: Optional[str] = None
+    revision_date: str = None
     draft: List[str] = field(default_factory=list)
 
     def to_xml(self, parent=None):

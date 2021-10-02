@@ -42,7 +42,7 @@ class Series:
 
     # to_hash -> dataclasses.asdict
 
-    def to_xml(self, parent):
+    def to_xml(self, parent, opts={}):
         name = "series"
         node = ET.Element(name) if parent is None \
             else ET.SubElement(parent, name)

@@ -7,7 +7,7 @@ import re
 import xml.etree.ElementTree as ET
 
 from .contribution_info import ContributionInfo
-from .organization import Organization
+from .relaton_bib import to_ds_instance
 
 
 @dataclass
@@ -22,9 +22,7 @@ class CopyrightAssociation:
         if not self.owner:
             raise ValueError("at least one owner should exist.")
 
-        self.owner = list(map(lambda o:
-                              ContributionInfo(entity=Organization(**o))
-                              if isinstance(o, dict) else o, self.owner))
+        self.owner = list(map(to_ds_instance(ContributionInfo), self.owner))
 
         if isinstance(self.from_, str) and re.match(r"\d{4}", self.from_):
             self.from_ = datetime.datetime.strptime(self.from_, "%Y")
@@ -42,7 +40,7 @@ class CopyrightAssociation:
         ET.SubElement(result, "from").text = str(self.from_.year) \
             if self.from_ else "unknown"
         if self.to:
-            ET.SubElement(result, "to").text = self.to
+            ET.SubElement(result, "to").text = str(self.to.year)
         for o in self.owner:
             o.to_xml(ET.SubElement(result, "owner"), opts)
         if self.scope:

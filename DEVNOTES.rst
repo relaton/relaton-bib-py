@@ -15,6 +15,15 @@ Approaches for automated ruby to python translation
 3. https://github.com/valo/rubypython - outdated
 4. manual - choosen
 
+Key differences
+---------------
+
+1. cyclic dependency possible in python
+2. keyword different, append _
+3. not allow to have method and pproperty with the same name in the same class
+4. brackets on functions mandatory
+
+
 How to do XML serialization?
 ----------------------------
 
@@ -76,4 +85,11 @@ https://pypi.org/project/iso639-lang/ vs https://pypi.org/project/iso-639/
 
 iso-639 - has less size
 
-[????] Open question how to simplify imports
+
+
+Open questions
+--------------
+
+[?] How to simplify imports?
+[?] Acsiidoc does order matters?
+[?] Some test framework which can generage random dataclass?

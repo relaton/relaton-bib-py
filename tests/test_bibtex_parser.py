@@ -14,7 +14,7 @@ def test_parse_BibTex():
         Title = {Something Great},
         publisher = "nobody",
         YEAR = 2005,
-        month = 5,
+        month = may,
         annote = {An Note},
         booktitle = {Book title},
         chapter = 4,
