@@ -1,13 +1,12 @@
 from __future__ import annotations
 import datetime
+import logging
 import pytest
 import re
 import os
 import xml.etree.ElementTree as ET
 
 from lxml import etree
-import bibtexparser
-from bibtexparser.bparser import BibTexParser
 
 from . import elements_equal
 
@@ -19,7 +18,7 @@ from relaton_bib.affiliation import Affiliation
 from relaton_bib.typed_uri import TypedUri
 from relaton_bib.document_identifier import DocumentIdentifier, DocumentIdType
 from relaton_bib.copyright_association import CopyrightAssociation
-from relaton_bib.formatted_string import FormattedString
+from relaton_bib.formatted_string import FormattedString, FormattedStringFormat
 from relaton_bib.contribution_info import ContributionInfo, ContributorRole
 from relaton_bib.bibliographic_date import BibliographicDate, \
     BibliographicDateType
@@ -47,7 +46,6 @@ from relaton_bib.document_relation_collection import DocRelationCollection
 from relaton_bib.document_relation import DocumentRelation
 from relaton_bib.workgroup import WorkGroup
 from relaton_bib.structured_identifier import StructuredIdentifier
-from relaton_bib.bibtex_parser import from_bibtex
 
 
 @pytest.fixture
@@ -123,7 +121,8 @@ def subject(title: TypedTitleStringCollection) -> BibliographicItem:
                 role=[
                     ContributorRole(
                         type="publisher",
-                        description=[FormattedString("Publisher role")])
+                        description=[FormattedString(content="Publisher role",
+                                                     format=None)])
                 ],
                 entity=Organization(
                     name="International Organization for Standardization",
@@ -161,10 +160,12 @@ def subject(title: TypedTitleStringCollection) -> BibliographicItem:
                     ContributorRole(
                         type="publisher",
                         description=[FormattedString(
-                            "Publisher description")]),
+                            content="Publisher description",
+                            format=None)]),
                     ContributorRole(
                         type="editor",
-                        description=[FormattedString("Editor description")])
+                        description=[FormattedString(
+                            content="Editor description", format=None)])
                 ],
                 entity=Organization(
                     name="IETF",
@@ -177,23 +178,24 @@ def subject(title: TypedTitleStringCollection) -> BibliographicItem:
                 role=[ContributorRole(type="author")],
                 entity=Person(
                     name=FullName(
-                        initial=[LocalizedString(content="A.",
-                            language="en", script="Latn")],
-                        surname=LocalizedString(content="Bierman",
-                            language="en", script="Latn"),
-                        forename=[LocalizedString(content="Forename",
-                            language="en", script="Latn")],
-                        addition=[LocalizedString(content="Addition",
-                            language="en", script="Latn")],
-                        prefix=[LocalizedString(content="Prefix",
-                            language="en", script="Latn")]),
+                        initial=[LocalizedString(
+                            content="A.", language="en", script="Latn")],
+                        surname=LocalizedString(
+                            content="Bierman", language="en", script="Latn"),
+                        forename=[LocalizedString(
+                            content="Forename", language="en", script="Latn")],
+                        addition=[LocalizedString(
+                            content="Addition", language="en", script="Latn")],
+                        prefix=[LocalizedString(
+                            content="Prefix", language="en", script="Latn")]),
                     affiliation=[Affiliation(
                         organization=Organization(
                             name="IETF",
                             abbreviation="IETF"),
                         description=[FormattedString(
                             content="Description",
-                            language="en")]
+                            language="en",
+                            format=None)]
                     )],
                     contact=[
                         Address(
@@ -213,7 +215,8 @@ def subject(title: TypedTitleStringCollection) -> BibliographicItem:
                 entity=Organization(name="Institution"),
                 role=[ContributorRole(
                     type="distributor",
-                    description=[FormattedString("sponsor")])],
+                    description=[FormattedString(content="sponsor",
+                                                 format=None)])],
             )
         ],
         copyright=[CopyrightAssociation(
@@ -242,7 +245,9 @@ def subject(title: TypedTitleStringCollection) -> BibliographicItem:
             DocumentRelation(
                 type=DocumentRelation.Type.updates,
                 bibitem=BibliographicItem(
-                    formattedref=FormattedRef("ISO 19115:2003")),
+                    formattedref=FormattedRef(
+                        content="ISO 19115:2003",
+                        format=None)),
                 locality=[
                     LocalityStack([
                         Locality(
@@ -267,12 +272,16 @@ def subject(title: TypedTitleStringCollection) -> BibliographicItem:
                                             content="supersedes"),
                 bibitem=BibliographicItem(
                     type=BibliographicItemType.STANDARD,
-                    formattedref=FormattedRef("ISO 19115:2003/Cor 1:2006"))),
+                    formattedref=FormattedRef(
+                        content="ISO 19115:2003/Cor 1:2006",
+                        format=None))),
             DocumentRelation(
                 type=DocumentRelation.Type.partOf,
                 bibitem=BibliographicItem(
                     title=TypedTitleStringCollection(
-                        [TypedTitleString(type=TypedTitleString.Type.MAIN, content="Book title")]))
+                        [TypedTitleString(
+                            type=TypedTitleString.Type.MAIN,
+                            content="Book title")]))
             )
         ]),
         series=[
@@ -422,13 +431,15 @@ def test_to_all_parts(subject: BibliographicItem):
         (t for t in item.title if t.type == TypedTitleString.Type.TPART),
         None) is None
     assert next(
-        (t.title.content for t in item.title if t.type == TypedTitleString.Type.MAIN),
+        (t.title.content for t in item.title
+         if t.type == TypedTitleString.Type.MAIN),
         None) == "Geographic information"
     assert len(item.abstract) == 0
     assert next(
         (d for d in item.docidentifier if re.match(r"-\d", d.id)),
         None) is None
-    assert len([d for d in item.docidentifier if "(all parts)" not in d.id]) == 1
+    assert len([d for d in item.docidentifier
+                if "(all parts)" not in d.id]) == 1
     assert next(
         (d for d in item.docidentifier if re.match(r":[12]\d\d\d", d.id)),
         None) is None
@@ -462,7 +473,7 @@ def test_bibitem_xml_string(subject: BibliographicItem):
     tree = etree.parse(file)
     relaxng_document = etree.parse(
         os.path.join(os.path.dirname(os.path.abspath(__file__)),
-        "../grammars/biblio.rng"))
+                     "../grammars/biblio.rng"))
     xml_document = etree.fromstring(ET.tostring(subject_xml))
     relaxng_processor = etree.RelaxNG(relaxng_document)
     assert relaxng_processor.validate(xml_document)
@@ -481,7 +492,7 @@ def test_bibdata_xml_string(subject: BibliographicItem):
     tree = etree.parse(file)
     relaxng_document = etree.parse(
         os.path.join(os.path.dirname(os.path.abspath(__file__)),
-        "examples/isobib.rng"))
+                     "examples/isobib.rng"))
     xml_document = etree.fromstring(ET.tostring(subject_xml))
     relaxng_processor = etree.RelaxNG(relaxng_document)
     assert relaxng_processor.validate(xml_document)
@@ -506,105 +517,104 @@ def test_render_addition_elements(subject: BibliographicItem):
 
 
 def test_add_note_to_xml(subject: BibliographicItem):
-    opts = {"note": [{ "text": "Note", "type": "note" }]}
+    opts = {"note": [{"text": "Note", "type": "note"}]}
     xml = subject.to_xml(opts=opts)
-    assert b"<note format=\"text/plain\" type=\"note\">Note</note>" in ET.tostring(xml)
+    assert b"<note format=\"text/plain\" type=\"note\">Note</note>" \
+        in ET.tostring(xml)
 
 
 def test_to_bibtex_standard(subject: BibliographicItem):
     subject.fetched = datetime.datetime(2020, 2, 13)
     bibtex = subject.to_bibtex()
 
-    # misc_compat.bib Created from misc.bib fith few difference in month and author
     file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                         "examples",
-                        "misc_compat.bib")
-    # parser = BibTexParser()
-    # parser.ignore_nonstandard_types = False
-    # parser.homogenize_fields = False
-    # parser.common_strings = False
-    # expected = bibtexparser.load(open(file, 'r'), parser)
-    # expected = from_bibtex(open(file, 'r').read())
-    # parser = BibTexParser()
-    # parser.ignore_nonstandard_types = False
-    # parser.homogenize_fields = False
-    # parser.common_strings = False
-    # actual = bibtexparser.loads(bibtex, parser)
+                        "misc_orig.bib")
 
     assert bibtex == open(file, 'r').read()
 
 
-def test_techreport(subject):
+def test_techreport(subject: BibliographicItem):
     subject.fetched = datetime.datetime(2020, 2, 13)
     subject.type = BibliographicItemType.TECHREPORT.value
     bibtex = subject.to_bibtex()
 
     file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                         "examples",
-                        "techreport_compat.bib")
+                        "techreport_orig.bib")
     assert bibtex == open(file, 'r').read()
 
-#       it "manual" do
-#         expect(subject).to receive(:type).and_return("manual").at_least :once
-#         bibtex = subject.to_bibtex
-#         file = "spec/examples/manual.bib"
-#         File.write(file, bibtex, encoding: "utf-8") unless File.exist? file
-#         expect(bibtex).to eq File.read(file, encoding: "utf-8")
-#           .sub(/(?<=timestamp = {)\d{4}-\d{2}-\d{2}/, Date.today.to_s)
-#       end
 
-#       it "phdthesis" do
-#         expect(subject).to receive(:type).and_return("phdthesis").at_least :once
-#         bibtex = subject.to_bibtex
-#         file = "spec/examples/phdthesis.bib"
-#         File.write(file, bibtex, encoding: "utf-8") unless File.exist? file
-#         expect(bibtex).to eq File.read(file, encoding: "utf-8")
-#           .sub(/(?<=timestamp = {)\d{4}-\d{2}-\d{2}/, Date.today.to_s)
-#       end
-#     end
+def test_manual(subject: BibliographicItem):
+    subject.fetched = datetime.datetime(2020, 2, 13)
+    subject.type = BibliographicItemType.MANUAL.value
+    bibtex = subject.to_bibtex()
 
-#     it "convert item to AsciiBib" do
-#       file = "spec/examples/asciibib.adoc"
-#       bib = subject.to_asciibib
-#       File.write file, bib, encoding: "UTF-8" unless File.exist? file
-#       expect(bib).to eq File.read(file, encoding: "UTF-8").gsub(
-#         /(?<=fetched::\s)\d{4}-\d{2}-\d{2}/, Date.today.to_s
-#       )
-#     end
-#   end
+    file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        "examples",
+                        "manual_orig.bib")
 
-#   it "initialize with copyright object" do
-#     org = RelatonBib::Organization.new(
-#       name: "Test Org", abbreviation: "TO", url: "test.org"
-#     )
-#     owner = [RelatonBib::ContributionInfo.new(entity: org)]
-#     copyright = RelatonBib::CopyrightAssociation.new(owner: owner, from: "2018")
-#     bibitem = RelatonBib::BibliographicItem.new(
-#       formattedref: RelatonBib::FormattedRef.new(content: "ISO123"),
-#       copyright: [copyright]
-#     )
-#     expect(bibitem.to_xml).to include(
-#       "<formattedref format=\"text/plain\">ISO123</formattedref>"
-#     )
-#   end
+    assert bibtex == open(file, 'r').read()
 
-#   it "warn invalid type argument error" do
-#     expect { RelatonBib::BibliographicItem.new type: "type" }.to output(
-#       /\[relaton-bib\] document type "type" is invalid./
-#     ).to_stderr
-#   end
 
-#   context RelatonBib::CopyrightAssociation do
-#     it "initialise with owner object" do
-#       org = RelatonBib::Organization.new(
-#         name: "Test Org", abbreviation: "TO", url: "test.org"
-#       )
-#       owner = [RelatonBib::ContributionInfo.new(entity: org)]
-#       copy = RelatonBib::CopyrightAssociation.new owner: owner, from: "2019"
-#       expect(copy.owner).to eq owner
-#     end
-#   end
+def test_phdthesis(subject: BibliographicItem):
+    subject.fetched = datetime.datetime(2020, 2, 13)
+    subject.type = "phdthesis"
+    bibtex = subject.to_bibtex()
 
+    file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        "examples",
+                        "phdthesis_orig.bib")
+
+    assert bibtex == open(file, 'r').read()
+
+
+def test_convert_item_to_AsciiBib(subject: BibliographicItem):
+    subject.fetched = datetime.datetime(2021, 8, 30)
+    adoc = subject.to_asciibib()
+
+    file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        "examples",
+                        "asciibib.adoc")
+
+    assert adoc == open(file, 'r').read()
+
+
+def test_initialize_with_copyright_object():
+    org = Organization(
+        name="Test Org",
+        abbreviation="TO",
+        uri="test.org"
+    )
+    owner = [ContributionInfo(entity=org)]
+    copyright = CopyrightAssociation(owner=owner, from_="2018")
+    bibitem = BibliographicItem(
+      formattedref=FormattedRef(content="ISO123"),
+      copyright=[copyright]
+    )
+
+    fmtref = bibitem.to_xml().find("./formattedref")
+
+    assert fmtref is not None
+    assert fmtref.text == "ISO123"
+    assert fmtref.attrib["format"] == FormattedStringFormat.TEXT_PLAIN
+
+
+def test_warn_invalid_type_argument_error(caplog):
+    invalid = "type"
+
+    with caplog.at_level(logging.WARNING):
+        BibliographicItem(type=invalid)
+
+    assert f"[relaton-bib] invalid document type: {invalid}" \
+        in caplog.text
+
+
+def test_initialise_with_owner_object():
+    org = Organization(name="Test Org", abbreviation="TO", uri="test.org")
+    owner = [ContributionInfo(entity=org)]
+    copy = CopyrightAssociation(owner=owner, from_="2019")
+    assert copy.owner == owner
 
 
 # FIXME MOVE TO hash_converter tests

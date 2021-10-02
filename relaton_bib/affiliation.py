@@ -37,6 +37,6 @@ class Affiliation:
             out.append(self.name.to_asciibib(f"{pref}affiliation.name"))
         for d in self.description:
             out.append(d.to_asciibib(f"{pref}affiliation.description",
-                                     self.description.size))
+                                     len(self.description)))
         out.append(self.organization.to_asciibib(f"{pref}affiliation.*"))
         return "\n".join(out)

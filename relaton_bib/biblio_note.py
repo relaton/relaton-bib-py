@@ -1,6 +1,6 @@
 import xml.etree.ElementTree as ET
 
-from dataclasses import dataclass
+from dataclasses import dataclass, InitVar
 from typing import List
 
 from .formatted_string import FormattedString
@@ -10,6 +10,7 @@ from .relaton_bib import delegate
 @dataclass(frozen=True)
 class BiblioNote(FormattedString):
     type: str = None
+    format: str = None
 
     def to_xml(self, parent=None):
         name = "note"
@@ -22,10 +23,11 @@ class BiblioNote(FormattedString):
 
     def to_asciibib(self, prefix="", count=1):
         pref = f"{prefix}." if prefix else prefix
-        out = [f"{pref}biblionote::"] if count > 1 and self.type else []
+        has_attrs = self.type
+        out = [f"{pref}biblionote::"] if count > 1 and has_attrs else []
         if self.type:
             out.append(f"{pref}biblionote.type:: {self.type}")
-        out.append(super().to_asciibib(f"{pref}biblionote", 1, self.type))
+        out.append(super().to_asciibib(f"{pref}biblionote", 1, has_attrs))
         return "\n".join(out)
 
 

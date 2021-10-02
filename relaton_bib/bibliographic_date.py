@@ -96,7 +96,7 @@ class BibliographicDate:
             out.append(f"{pref}date.from:: {self.from_}")
         if self.to:
             out.append(f"{pref}date.to:: #{self.to}")
-        return "\n".join(out + [""])
+        return "\n".join(out)
 
     def value(self, prop="on", part=None):
         return self._process_date(getattr(self, prop), part)

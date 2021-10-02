@@ -58,8 +58,8 @@ def test_to_asciibib(subject):
         """docnumber:: AGNT-007
            agency:: agncy1
            agency:: agency2
-           class:: class
            type:: Chinese Standard
+           class:: class
            partnumber:: 1
            edition:: 2
            version:: 3.4.5
@@ -76,8 +76,8 @@ def test_to_asciibib_with_pref(subject):
         """test.docnumber:: AGNT-007
            test.agency:: agncy1
            test.agency:: agency2
-           test.class:: class
            test.type:: Chinese Standard
+           test.class:: class
            test.partnumber:: 1
            test.edition:: 2
            test.version:: 3.4.5

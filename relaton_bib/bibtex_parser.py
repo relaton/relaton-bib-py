@@ -24,6 +24,7 @@ from .organization import Organization
 
 
 def from_bibtex(bibtex: str) -> dict:
+    # https://github.com/sciunto-org/python-bibtexparser/issues/280#issuecomment-932478235
     parser = BibTexParser(common_strings=True)
     bt = bibtexparser.loads(bibtex, parser)
 
@@ -60,7 +61,8 @@ def _fetch_docid(bibtex: dict) \
 
 
 def _fetch_fetched(bibtex: dict) -> datetime.datetime:
-    # TODO replace strptime with https://dateutil.readthedocs.io/en/stable/index.html
+    # TODO replace strptime with
+    # https://dateutil.readthedocs.io/en/stable/index.html
     # to support more formats
     timestamp = bibtex.get("timestamp")
     return datetime.datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S") \

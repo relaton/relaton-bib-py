@@ -101,10 +101,10 @@ class Organization(Contributor):
                 out.append(f"{pref}subdivision::")
             out.append(sd.to_asciibib(f"{pref}subdivision"))
         for idtfr in self.identifier:
-            out.append(n.to_asciibib(prefix, len(self.identifier)))
+            out.append(idtfr.to_asciibib(prefix, len(self.identifier)))
         parent = super().to_asciibib(prefix)
         if parent:
-            out.append()
+            out.append(parent)
         return "\n".join(out)
 
     def bib_name(self) -> str:

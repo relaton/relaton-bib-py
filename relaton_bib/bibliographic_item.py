@@ -4,6 +4,7 @@ import datetime
 import logging
 import re
 import xml.etree.ElementTree as ET
+import typing
 from dataclasses import dataclass, field, is_dataclass
 from enum import Enum
 from typing import List
@@ -78,6 +79,8 @@ class BibliographicItemType(str, Enum):
 
 @dataclass
 class BibliographicItem:
+    FETCHED_FORMAT: typing.ClassVar[str] = "%Y-%m-%d"
+
     id: str = None
     type: str = None
     docnumber: str = None
@@ -119,7 +122,7 @@ class BibliographicItem:
     def __post_init__(self):
         if not BibliographicItemType.has_value(self.type):
             logging.warning(
-                f"[relaton-bib] document type {self.type} is invalid.")
+                f"[relaton-bib] invalid document type: {self.type}")
         if isinstance(self.title, str):
             self.title = TypedTitleStringCollection([self.title])
         elif isinstance(self.title, list):
@@ -257,8 +260,9 @@ class BibliographicItem:
                                                   self.keyword)))
         self._bibtex_docidentifier(item)
         if self.fetched:
-            item["timestamp"] = datetime.datetime.strftime(self.fetched,
-                                                           "%Y-%m-%d")
+            item["timestamp"] = datetime.datetime.strftime(
+                self.fetched,
+                BibliographicItem.FETCHED_FORMAT)
         self._bibtex_link(item)
         if not bibtex:
             bibtex = BibDatabase()
@@ -271,6 +275,8 @@ class BibliographicItem:
             "edition",
             "author",
             "publisher",
+            "school",
+            "organization",
             "institution",
             "address",
             "note",
@@ -373,50 +379,29 @@ class BibliographicItem:
             published = published
         return self.rev_date
 
-#     # @param prefix [String]
-#     # @return [String]
     def to_asciibib(self, prefix=""):
         pref = f"{prefix}." if prefix else prefix
         out = [] if prefix else ["[%bibitem]", "== {blank}"]
-
-        # if self.id:
-        #     out.append(f"{pref}id:: {self.id}")
-        # if self.fetched:
-        #     out.append(f"{pref}fetched:: {self.fetched}")
-        # if self.title:
-        #     out += [t.to_asciibib(prefix, len(self.docidentifier))
-        #             for t in self.title]
-        # if self.type:
-        #     out.append(f"{pref}type:: {self.type}")
-        # if self.docidentifier:
-        #     out += [di.to_asciibib(prefix, len(self.docidentifier))
-        #             for di in self.docidentifier]
-        # if self.docnumber:
-        #     out.append(f"{pref}docnumber:: {self.docnumber}")
-        # if self.edition:
-        #     out.append(f"{pref}edition:: {self.edition}")
-        # if self.language:
-        #     out += [f"{pref}language:: {l}" for l in self.language]
-        # if self.script:
-        #     out += [f"{pref}script:: {s}" for s in self.script]
-        # if self.version:
-        #     out.append(self.version.to_asciibib(prefix))
-        # if self.biblionote:
-        #     out += [di.to_asciibib(prefix, len(self.docidentifier))
-        #             for di in self.docidentifier]
 
         order = ["id", "fetched", "title", "type", "docidentifier",
                  "docnumber", "edition", "language", "script", "version",
                  "biblionote", "status", "date", "abstract", "copyright",
                  "link", "medium", "place", "extent", "accesslocation",
                  "classification", "validity", "contributor", "relation",
-                 "series", "doctype", "formattedref", "keyword",
+                 "series", "doctype", "subdoctype", "formattedref", "keyword",
                  "editorialgroup", "ics", "structuredidentifier"]
 
         for prop in order:
             value = getattr(self, prop)
 
-            if hasattr(value, '__iter__'):
+            if isinstance(value, (str)):
+                out.append(f"{pref}{prop}:: {value}")
+            elif isinstance(value, datetime.date):
+                out.append(
+                    f"{pref}{prop}:: {value.strftime(type(self).FETCHED_FORMAT)}")
+            elif hasattr(value, 'to_asciibib'):
+                out.append(value.to_asciibib(prefix))
+            elif hasattr(value, '__iter__'):
                 if len(value) == 0:
                     continue
                 if is_dataclass(value[0]):
@@ -434,7 +419,7 @@ class BibliographicItem:
             elif value:
                 out.append(f"{pref}{prop}:: {value}")
 
-        return "\n".join(out)
+        return "\n".join([l for l in out if l])  # drop empty lines
 
     def _bibtex_title(self, item: dict):
         for t in self.title:
@@ -567,7 +552,8 @@ class BibliographicItem:
         root = ET.Element(name) if parent is None \
             else ET.SubElement(parent, name)
         if self.fetched:
-            ET.SubElement(root, "fetched").text = self.fetched.strftime("%Y-%m-%d")
+            ET.SubElement(root, "fetched").text = self.fetched.strftime(
+                BibliographicItem.FETCHED_FORMAT)
         self.title.to_xml(root, opts)
         if self.formattedref:
             self.formattedref.to_xml(root)

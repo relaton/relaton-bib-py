@@ -117,7 +117,7 @@ class DocumentRelation:
 
         return result
 
-    def to_asciibib(self, prefix=""):
+    def to_asciibib(self, prefix="", count=1) -> str:
         pref = f"{prefix}." if prefix else prefix
         out = [f"{pref}type:: {self.type}"]
         if self.description:

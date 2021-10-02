@@ -32,8 +32,7 @@ def test_note_to_asciibib(biblio_note):
 
     assert result == inspect.cleandoc(
         """test.biblionote.type:: type
-           test.biblionote.content:: content
-           test.biblionote.format:: text/plain""")
+           test.biblionote.content:: content""")
 
 
 def test_note_hash(biblio_note):

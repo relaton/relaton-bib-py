@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 
 from .localized_string import LocalizedString
@@ -16,7 +16,7 @@ class FormattedStringFormat(str, Enum):
 
 @dataclass(frozen=True)
 class FormattedString(LocalizedString):
-    format: str = FormattedStringFormat.TEXT_PLAIN.value
+    format: str = field(default=FormattedStringFormat.TEXT_PLAIN.value)
 
     def to_xml(self, parent):
         if self.format:
@@ -25,7 +25,7 @@ class FormattedString(LocalizedString):
 
     def to_asciibib(self, prefix="", count=1, has_attrs=False):
         has_attrs = has_attrs or self.format
-        pref = prefix + "." if prefix else prefix
+        pref = f"{prefix}." if prefix else prefix
         out = [super().to_asciibib(prefix, count, has_attrs)]
         if self.format:
             out.append(f"{pref}format:: {self.format}")

@@ -21,7 +21,8 @@ class LocalizedString:
                 return not isinstance(x, (LocalizedString, dict, str))
             inv = list(filter(reject, self.content))
 
-        if not (isinstance(self.content, str) or not inv and(self.content and any(self.content))):
+        if not (isinstance(self.content, str) or not inv
+                and (self.content and any(self.content))):
             klass = type(inv[0]) if isinstance(self.content, list) \
                 else type(self.content)
             klass = klass.__name__
@@ -37,7 +38,7 @@ class LocalizedString:
         if isinstance(self.content, list):
             object.__setattr__(self, "content",
                                list(map(to_ds_instance(LocalizedString),
-                                   self.content)))
+                                        self.content)))
 
     def __str__(self):
         return self.content if isinstance(self.content, str) \
@@ -82,7 +83,7 @@ class LocalizedString:
         pref = f"{prefix}." if prefix else prefix
 
         if isinstance(self.content, list):
-            return "".join(map(
+            return "\n".join(map(
                 lambda c: c.to_asciibib(f"{pref}variant", len(self.content)),
                 self.content))
         else:

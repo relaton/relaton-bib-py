@@ -2,14 +2,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field, InitVar
 from enum import Enum
 from typing import List, Union
-import inspect
 
 import re
 import xml.etree.ElementTree as ET
 
 from .formatted_string import FormattedString, FormattedStringFormat
 from .localized_string import LocalizedString
-from .relaton_bib import lang_filter, delegate, to_ds_instance
+from .relaton_bib import delegate, to_ds_instance
 
 
 @dataclass

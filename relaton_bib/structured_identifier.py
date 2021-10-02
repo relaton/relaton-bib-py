@@ -81,18 +81,17 @@ class StructuredIdentifier:
 
         return result
 
-    def to_asciibib(self, prefix=""):
+    def to_asciibib(self, prefix="", count=1):
         pref = f"{prefix}." if prefix else prefix
         out = [f"{pref}docnumber:: {self.docnumber}"]
         for a in self.agency:
             out.append(f"{pref}agency:: {a}")
-        if self.class_:
-            out.append(f"{pref}class:: {self.class_}")
 
-        for opt_attr in ["type", "partnumber", "edition", "version",
+        for opt_attr in ["type", "class", "partnumber", "edition", "version",
                          "supplementtype", "supplementnumber", "language",
                          "year"]:
-            value = getattr(self, opt_attr)
+            attr = opt_attr if opt_attr != "class" else "class_"
+            value = getattr(self, attr)
             if value:
                 out.append(f"{pref}{opt_attr}:: {value}")
 
