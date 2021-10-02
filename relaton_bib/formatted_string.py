@@ -4,7 +4,7 @@ from enum import Enum
 from .localized_string import LocalizedString
 
 
-class FormattedStringFormat(Enum):
+class FormattedStringFormat(str, Enum):
     TEXT_PLAIN = "text/plain"
     TEXT_HTML = "text/html"
     TEXT_MARKDOWN = "text/markdown"
@@ -23,9 +23,6 @@ class FormattedString(LocalizedString):
             parent.attrib["format"] = self.format
         return super().to_xml(parent)
 
-    # @param prefix [String]
-    # @param count [Integer] number of elements
-    # @return [String]
     def to_asciibib(self, prefix="", count=1, has_attrs=False):
         has_attrs = has_attrs or self.format
         pref = prefix + "." if prefix else prefix

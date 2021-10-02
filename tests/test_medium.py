@@ -23,13 +23,14 @@ def test_to_xml(subject):
 
     assert host.find("./medium/form").text == "form"
     assert host.find("./medium/size").text == "size"
-    assert host.find("./medium/scale").text == "scale"
+    assert result.find("./scale").text == "scale"
 
 
 def test_to_xml_with_no_props(subject_none):
     host = ET.Element("host")
     result = subject_none.to_xml(host)
 
+    assert result is not None
     assert host.find("./medium") is not None
 
 

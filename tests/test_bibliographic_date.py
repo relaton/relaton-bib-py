@@ -1,8 +1,3 @@
-import dataclasses
-import inspect
-import logging
-import xml.etree.ElementTree as ET
-
 from relaton_bib.bibliographic_date import BibliographicDate, \
                                            BibliographicDateType
 

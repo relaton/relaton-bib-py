@@ -1,14 +1,15 @@
 from __future__ import annotations
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, InitVar
 from enum import Enum
 from typing import List, Union
+import inspect
 
 import re
 import xml.etree.ElementTree as ET
 
 from .formatted_string import FormattedString, FormattedStringFormat
 from .localized_string import LocalizedString
-from .relaton_bib import lang_filter, delegate
+from .relaton_bib import lang_filter, delegate, to_ds_instance
 
 
 @dataclass
@@ -21,24 +22,28 @@ class TypedTitleString:
 
     type: str = None
     title: FormattedString = None
-    content: Union[str, List[LocalizedString]] = None
-    language: List[str] = field(default_factory=list)
-    script: List[str] = field(default_factory=list)
-    format: str = FormattedStringFormat.TEXT_PLAIN.value
+    content: InitVar[Union[str, List[LocalizedString]]] = field(default=None)
+    language: InitVar[List[str]] = field(default=[])
+    script: InitVar[List[str]] = field(default=list())
+    format: InitVar[str] = field(default=FormattedStringFormat.TEXT_PLAIN.value)
 
-    def __post_init__(self):
-        if self.title is None and self.content is None:
+    def __post_init__(self, content, language, script, format):
+        if self.title is None and content is None:
             raise ValueError("Argument title or content should be passed")
 
         if not self.title:
             self.title = FormattedString(
-                content=self.content,
-                language=self.language,
-                script=self.script,
-                format=self.format)
+                content=content,
+                language=language,
+                script=script,
+                format=format)
+
+    def __str__(self):
+        return str(self.title)
 
     @classmethod
-    def from_string(cls, title, lang=None, script=None):
+    def from_string(cls, title, lang=[], script=[]) \
+            -> TypedTitleStringCollection:
         types = [cls.Type.TINTRO, cls.Type.TMAIN, cls.Type.TPART]
         ttls = cls.split_title(title)
         tts = [None if p is None else
@@ -56,7 +61,7 @@ class TypedTitleString:
         return TypedTitleStringCollection(tts)
 
     @classmethod
-    def split_title(cls, title):
+    def split_title(cls, title) -> (str, str, str):
         ttls = re.sub(r"\w\.Imp\s?\d+\u00A0:\u00A0", "", title).split(" - ")
         if len(ttls) < 2:
             return [None, str(ttls[0]), None]
@@ -64,23 +69,23 @@ class TypedTitleString:
             return cls.intro_or_part(ttls)
 
     @classmethod
-    def intro_or_part(cls, ttls):
+    def intro_or_part(cls, ttls) -> (str, str, str):
         if re.match(r"^(Part|Partie) \d+:", ttls[1]):
-            return [None, ttls[0], " -- ".join(ttls[1:])]
+            return (None, ttls[0], " -- ".join(ttls[1:]))
         else:
             parts = ttls[2:]
             part = None
             if any(parts):
                 part = " -- ".join(parts)
-            return [ttls[0], ttls[1], part]
+            return (ttls[0], ttls[1], part)
 
-    def to_xml(self, parent):
+    def to_xml(self, parent) -> ET.Element:
         if self.type:
             parent.attrib["type"] = self.type
         self.title.to_xml(parent)
         return parent
 
-    def to_asciibib(self, prefix="", count=1):
+    def to_asciibib(self, prefix="", count=1) -> str:
         pref = f"{prefix}." if prefix else prefix
         out = [f"{pref}title::"] if count > 1 else []
         if self.type:
@@ -90,23 +95,24 @@ class TypedTitleString:
 
 
 @dataclass
-@delegate("titles", "append", "__getitem__", "__len__", "__iter__",
-          "__reversed__", "__contains__")
+@delegate("titles", "append", "extend", "insert", "remove", "pop", "clear",
+          "__getitem__", "__len__", "__iter__", "__reversed__",
+          "__contains__")
 class TypedTitleStringCollection():
     titles: List[TypedTitleString]
 
     def __post_init__(self):
-        self.titles = list(map(
-            lambda t: TypedTitleString(**t) if isinstance(t, dict) else t,
-            self.titles))
+        self.titles = list(map(to_ds_instance(TypedTitleString), self.titles))
 
     def lang(self, lang=None):
-        return self.__class__(lang_filter(self.titles, {"lang": lang})) \
+        return self.__class__(filter(
+            lambda t: lang in t.title.language, self.titles)) \
             if lang else self
 
     def delete_title_part(self):
-        self.titles = filter(lambda t: t.type != TypedTitleString.Type.TPART,
-                             self.titles)
+        self.titles = list(
+            filter(lambda t: t.type != TypedTitleString.Type.TPART,
+                   self.titles))
 
     # @param init [Array, Hash]
     # @return [RelatonBib::TypedTitleStringCollection]
@@ -131,8 +137,12 @@ class TypedTitleStringCollection():
     # @option opts [Nokogiri::XML::Builder] XML builder
     # @option opts [String, Symbol] :lang language
     def to_xml(self, parent, opts={}):
-        tl = lang_filter(self.titles, opts)
-        for t in tl:
+        lang = opts.get("lang")
+        filtered = list(filter(
+            lambda t: t.title.language and lang in t.title.language,
+            self.titles))
+        titles = filtered if any(filtered) else self.titles
+        for t in titles:
             t.to_xml(ET.SubElement(parent, "title"))
 
         return parent

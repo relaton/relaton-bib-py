@@ -2,7 +2,10 @@ import datetime
 import dataclasses
 import re
 
-from .localized_string import LocalizedString
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .localized_string import LocalizedString
 
 
 class RequestError(Exception):
@@ -51,19 +54,11 @@ def single_element_array(array):
 
 
 def lang_filter(target, opts={}):
-    filtered = list(filter(lambda t: opts.get("lang") in t.language, target))
+    lang = opts.get("lang")
+    filtered = list(filter(
+        lambda t: t.language and lang in t.language,
+        target))
     return filtered if filtered else target
-
-
-def localized_string(s):
-    if isinstance(s, dict):
-        return LocalizedString(**s)
-    elif isinstance(s, str):
-        return LocalizedString(s)
-    elif isinstance(s, LocalizedString):
-        return s
-    else:
-        ValueError(f"don't know how to convert {type(s)}")
 
 
 def to_ds_instance(klass, fail=False):

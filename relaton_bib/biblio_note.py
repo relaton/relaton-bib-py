@@ -1,7 +1,7 @@
 import xml.etree.ElementTree as ET
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import List
 
 from .formatted_string import FormattedString
 from .relaton_bib import delegate
@@ -12,8 +12,8 @@ class BiblioNote(FormattedString):
     type: str = None
 
     def to_xml(self, parent=None):
-        name = "node"
-        node = ET.Element("node")if parent is None \
+        name = "note"
+        node = ET.Element(name) if parent is None \
             else ET.SubElement(parent, name)
         super().to_xml(node)
         if self.type:
@@ -32,8 +32,8 @@ class BiblioNote(FormattedString):
 @dataclass
 @delegate("array", "append", "__getitem__", "__len__", "__iter__",
           "__reversed__", "__contains__")
-class BiblioNoteCollection():
-    array: list[BiblioNote]
+class BiblioNoteCollection:
+    array: List[BiblioNote]
 
     @property
     def first(self):

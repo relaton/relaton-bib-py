@@ -18,17 +18,17 @@ class Validity:
 
     def to_xml(self, parent):
         name = "validity"
-        node = ET.Element(name) if parent is None \
+        result = ET.Element(name) if parent is None \
             else ET.SubElement(parent, name)
 
         if self.begins:
-            node.attrib["validityBegins"] = self.begins.strftime(self.FORMAT)
+            ET.SubElement(result, "validityBegins").text = self.begins.strftime(self.FORMAT)
         if self.ends:
-            node.attrib["validityEnds"] = self.ends.strftime(self.FORMAT)
+            ET.SubElement(result, "validityEnds").text = self.ends.strftime(self.FORMAT)
         if self.revision:
-            node.attrib["revision"] = self.revision.strftime(self.FORMAT)
+            ET.SubElement(result, "revision").text = self.revision.strftime(self.FORMAT)
 
-        return node
+        return result
 
     # @param prefix [String]
     # @return [String]

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List
 
 import xml.etree.ElementTree as ET
 
@@ -9,8 +9,8 @@ class Address:
     street: List[str]
     city: str
     country: str
-    state: Optional[str] = None
-    postcode: Optional[str] = None
+    state: str = None
+    postcode: str = None
 
     def to_xml(self, parent):
         name = "address"
@@ -19,9 +19,9 @@ class Address:
         for st in self.street:
             ET.SubElement(result, "street").text = st
         ET.SubElement(result, "city").text = self.city
-        ET.SubElement(result, "country").text = self.country
         if self.state:
             ET.SubElement(result, "state").text = self.state
+        ET.SubElement(result, "country").text = self.country
         if self.postcode:
             ET.SubElement(result, "postcode").text = self.postcode
         return result

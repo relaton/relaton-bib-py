@@ -1,38 +1,44 @@
 from __future__ import annotations
+import copy
 import datetime
 import logging
+import re
 import xml.etree.ElementTree as ET
-
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, is_dataclass
 from enum import Enum
-from typing import List, TYPE_CHECKING
+from typing import List
 
-from .typed_uri import TypedUri
-from .document_identifier import DocumentIdentifier
-from .copyright_association import CopyrightAssociation
+import bibtexparser
+from bibtexparser.bibdatabase import BibDatabase
+from bibtexparser.bwriter import BibTexWriter
+
 from .formatted_string import FormattedString
-from .contribution_info import ContributionInfo
-from .bibliographic_date import BibliographicDate
-from .series import Series
+from .contribution_info import ContributionInfo, \
+    ContributorRoleType
+from .copyright_association import CopyrightAssociation
+from .bibliographic_date import BibliographicDate, BibliographicDateType
+from .series import Series, SeriesType
 from .document_status import DocumentStatus
-from .organization import Organization
 from .localized_string import LocalizedString
 from .typed_title_string import TypedTitleString, TypedTitleStringCollection
+from .typed_uri import TypedUri
 from .formatted_ref import FormattedRef
 from .medium import Medium
 from .classification import Classification
 from .validity import Validity
 from .bib_item_locality import BibItemLocality
-from .biblio_note import BiblioNote, BiblioNoteCollection
+from .biblio_note import BiblioNoteCollection
 from .biblio_version import BibliographicItemVersion
 from .place import Place
+from .person import Person
 from .structured_identifier import StructuredIdentifierCollection
 from .editorial_group import EditorialGroup
 from .ics import ICS
 
-if TYPE_CHECKING:
-    from .document_relation import DocumentRelation
-    from .document_relation_collection import DocRelationCollection
+from .relaton_bib import to_ds_instance
+
+from .document_relation import *
+from .document_relation_collection import *
 
 # from .bibtex_parser import BibtexPaser
 # from .xml_parser import XmlPaser
@@ -72,26 +78,28 @@ class BibliographicItemType(str, Enum):
 
 @dataclass
 class BibliographicItem:
-    # all_parts: bool  # = False
     id: str = None
     type: str = None
     docnumber: str = None
     edition: str = None
     doctype: str = None  # TODO check if Enum type better then str
-    title: TypedTitleStringCollection = field(default_factory=list)
+    subdoctype: str = None
+    title: TypedTitleStringCollection = field(
+        default=TypedTitleStringCollection([]))
     link: List[TypedUri] = field(default_factory=list)
-    docid: List[DocumentIdentifier] = field(default_factory=list)
+    docidentifier: List[DocumentIdentifier] = field(default_factory=list)
     date: List[BibliographicDate] = field(default_factory=list)
+    abstract: List[FormattedString] = field(default_factory=list)
     contributor: List[ContributionInfo] = field(default_factory=list)
     version: BibliographicItemVersion = None
-    biblionote: BiblioNoteCollection = None
+    biblionote: BiblioNoteCollection = field(default=BiblioNoteCollection([]))
     language: List[str] = field(default_factory=list)
     script: List[str] = field(default_factory=list)
     formattedref: FormattedRef = None
     status: DocumentStatus = None
     copyright: List[CopyrightAssociation] = field(default_factory=list)
-    relation: DocRelationCollection = None
-    series: List[Place] = field(default_factory=list)
+    relation: DocRelationCollection = field(default=DocRelationCollection([]))
+    series: List[Series] = field(default_factory=list)
     medium: Medium = None
     place: List[Place] = field(default_factory=list)
     extent: List[BibItemLocality] = field(default_factory=list)
@@ -105,95 +113,19 @@ class BibliographicItem:
     ics: List[ICS] = field(default_factory=list)
     structuredidentifier: StructuredIdentifierCollection = None
 
+    all_parts: bool = field(default=False, init=False, repr=False)
+    _id_attribute: bool = field(default=True, init=False, repr=False)
+
     def __post_init__(self):
-        if self.type and not BibliographicItemType.has_value(self.type):
+        if not BibliographicItemType.has_value(self.type):
             logging.warning(
-                f"[relaton-bib] document type {self.type} is invalid")
-        # TODO
+                f"[relaton-bib] document type {self.type} is invalid.")
+        if isinstance(self.title, str):
+            self.title = TypedTitleStringCollection([self.title])
+        elif isinstance(self.title, list):
+            self.title = TypedTitleStringCollection(self.title)
 
-    def to_xml(self, parent, opts={}):
-        name = "bibdata" if opts.get("bibdata") else "bibitem"
-        result = ET.Element(name) if parent is None \
-            else ET.SubElement(parent, name)
-        # TODO continue
-        return result
-
-    def to_asciibib(self, prefix=""):
-        pass
-    # @param id [String, NilClass]
-    # @param title [RelatonBib::TypedTitleStringCollection,
-    #   Array<Hash, RelatonBib::TypedTitleString>]
-    # @param formattedref [RelatonBib::FormattedRef, NilClass]
-    # @param type [String, NilClass]
-    # @param docid [Array<RelatonBib::DocumentIdentifier>]
-    # @param docnumber [String, NilClass]
-    # @param language [Arra<String>]
-    # @param script [Array<String>]
-    # @param docstatus [RelatonBib::DocumentStatus, NilClass]
-    # @param edition [String, NilClass]
-    # @param version [RelatonBib::BibliographicItem::Version, NilClass]
-    # @param biblionote [RelatonBib::BiblioNoteCollection]
-    # @param series [Array<RelatonBib::Series>]
-    # @param medium [RelatonBib::Medium, NilClas]
-    # @param place [Array<String, RelatonBib::Place>]
-    # @param extent [Array<Relaton::BibItemLocality>]
-    # @param accesslocation [Array<String>]
-    # @param classification [Array<RelatonBib::Classification>]
-    # @param validity [RelatonBib:Validity, NilClass]
-    # @param fetched [Date, NilClass] default nil
-    # @param keyword [Array<String>]
-    # @param doctype [String]
-    # @param editorialgroup [RelatonBib::EditorialGroup, nil]
-    # @param ics [Array<RelatonBib::ICS>]
-    # @param structuredidentifier [RelatonBib::StructuredIdentifierCollection]
-    #
-    # @param copyright [Array<Hash, RelatonBib::CopyrightAssociation>]
-    # @option copyright [Array<Hash, RelatonBib::ContributionInfo>] :owner
-    # @option copyright [String] :from
-    # @option copyright [String, NilClass] :to
-    # @option copyright [String, NilClass] :scope
-    #
-    # @param date [Array<Hash>]
-    # @option date [String] :type
-    # @option date [String] :from
-    # @option date [String] :to
-    #
-    # @param contributor [Array<Hash>]
-    # @option contributor [RealtonBib::Organization, RelatonBib::Person]
-    # @option contributor [String] :type
-    # @option contributor [String] :from
-    # @option contributor [String] :to
-    # @option contributor [String] :abbreviation
-    # @option contributor [Array<Array<String,Array<String>>>] :role
-    #
-    # @param abstract [Array<Hash, RelatonBib::FormattedString>]
-    # @option abstract [String] :content
-    # @option abstract [String] :language
-    # @option abstract [String] :script
-    # @option abstract [String] :type
-    #
-    # @param relation [Array<Hash>]
-    # @option relation [String] :type
-    # @option relation [RelatonBib::BibliographicItem,
-    #                   RelatonIso::IsoBibliographicItem] :bibitem
-    # @option relation [Array<RelatonBib::Locality,
-    #                   RelatonBib::LocalityStack>] :locality
-    # @option relation [Array<RelatonBib::SourceLocality,
-    #                   RelatonBib::SourceLocalityStack>] :source_locality
-    #
-    # @param link [Array<Hash, RelatonBib::TypedUri>]
-    # @option link [String] :type
-    # @option link [String] :content
-#     def initialize(**args)
-#       if args[:type] && !TYPES.include?(args[:type])
-#         warn %{[relaton-bib] document type "#{args[:type]}" is invalid.}
-#       end
-
-#       @title = TypedTitleStringCollection.new(args[:title])
-
-#       @date = (args[:date] || []).map do |d|
-#         d.is_a?(Hash) ? BibliographicDate.new(**d) : d
-#       end
+        self.date = list(map(to_ds_instance(BibliographicDate), self.date))
 
 #       @contributor = (args[:contributor] || []).map do |c|
 #         if c.is_a? Hash
@@ -203,121 +135,65 @@ class BibliographicItem:
 #         end
 #       end
 
-#       @abstract = (args[:abstract] || []).map do |a|
-#         a.is_a?(Hash) ? FormattedString.new(**a) : a
-#       end
+        self.abstract = list(map(to_ds_instance(FormattedString),
+                                 self.abstract))
 
-#       @copyright = args.fetch(:copyright, []).map do |c|
-#         c.is_a?(Hash) ? CopyrightAssociation.new(**c) : c
-#       end
+        self.copyright = list(map(to_ds_instance(CopyrightAssociation),
+                                  self.copyright))
 
-#       @docidentifier  = args[:docid] || []
-#       @formattedref   = args[:formattedref] if title.empty?
-#       @id             = args[:id] || makeid(nil, false)
-#       @type           = args[:type]
-#       @docnumber      = args[:docnumber]
-#       @edition        = args[:edition]
-#       @version        = args[:version]
-#       @biblionote     = args.fetch :biblionote, BiblioNoteCollection.new([])
-#       @language       = args.fetch :language, []
-#       @script         = args.fetch :script, []
-#       @status         = args[:docstatus]
-#       @relation       = DocRelationCollection.new(args[:relation] || [])
-#       @link           = args.fetch(:link, []).map do |s|
-#         if s.is_a?(Hash) then TypedUri.new(**s)
-#         elsif s.is_a?(String) then TypedUri.new(content: s)
-#         else s
-#         end
-#       end
-#       @series         = args.fetch :series, []
-#       @medium         = args[:medium]
-#       @place          = args.fetch(:place, []).map do |pl|
-#         pl.is_a?(String) ? Place.new(name: pl) : pl
-#       end
-#       @extent         = args[:extent] || []
-#       @accesslocation = args.fetch :accesslocation, []
-#       @classification = args.fetch :classification, []
-#       @validity       = args[:validity]
-#       # we should pass the fetched arg from scrappers
-#       @fetched        = args.fetch :fetched, nil
-#       @keyword        = (args[:keyword] || []).map do |kw|
-#         LocalizedString.new(kw)
-#       end
-#       @license        = args.fetch :license, []
-#       @doctype        = args[:doctype]
-#       @editorialgroup = args[:editorialgroup]
-#       @ics            = args.fetch :ics, []
-#       @structuredidentifier = args[:structuredidentifier]
-#     end
-#     # rubocop:enable Metrics/MethodLength, Metrics/AbcSize
-#     # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+        if not self.id:
+            self.id = self.makeid(None, False)
 
-#     # @param lang [String] language code Iso639
-#     # @return [RelatonBib::FormattedString, Array<RelatonBib::FormattedString>]
-#     def abstract(lang: nil)
-#       if lang
-#         @abstract.detect { |a| a.language&.include? lang }
-#       else
-#         @abstract
-#       end
-#     end
+        self.link = list(map(to_ds_instance(TypedUri), self.link))
+        self.place = list(map(to_ds_instance(Place), self.place))
+        self.keyword = list(map(to_ds_instance(LocalizedString), self.keyword))
 
-#     # @param id [RelatonBib::DocumentIdentifier]
-#     # @param attribute [boolean, nil]
-#     # @return [String]
-#     def makeid(id, attribute)
-#       return nil if attribute && !@id_attribute
+    def abstract_for_lang(self, lang=None):
+        if lang:
+            return next((a for a in self.abstract if lang in a.language), None)
+        else:
+            return self.abstract
 
-#       id ||= @docidentifier.reject { |i| i.type == "DOI" }[0]
-#       return unless id
+    def makeid(self, docid, attribute=None):
+        # TODO how this handled if not set
+        # ORIGINAL CODE: return nil if attribute && !@id_attribute
+        if attribute and not self._id_attribute:
+            return None
 
-#       # contribs = publishers.map { |p| p&.entity&.abbreviation }.join '/'
-#       # idstr = "#{contribs}#{delim}#{id.project_number}"
-#       # idstr = id.project_number.to_s
-#       idstr = id.id.gsub(/:/, "-").gsub /\s/, ""
-#       # if id.part_number&.size&.positive? then idstr += "-#{id.part_number}"
-#       idstr.strip
-#     end
+        if not docid:
+            docid = next((i for i in self.docidentifier if i.type != "DOI"),
+                         None)
+        if not docid:
+            return None
 
-#     # @param identifier [RelatonBib::DocumentIdentifier]
-#     # @param options [Hash]
-#     # @option options [boolean, nil] :no_year
-#     # @option options [boolean, nil] :all_parts
-#     # @return [String]
-#     def shortref(identifier, **opts) # rubocop:disable Metrics/CyclomaticComplexity,Metrics/AbcSize,Metrics/PerceivedComplexity
-#       pubdate = date.select { |d| d.type == "published" }
-#       year = if opts[:no_year] || pubdate.empty? then ""
-#              else ":" + pubdate&.first&.on(:year).to_s
-#              end
-#       year += ": All Parts" if opts[:all_parts] || @all_parts
+        idstr = re.sub(r":", "-", docid.id)
+        idstr = re.sub(r"\s", "", idstr)
+        return idstr.strip()
 
-#       "#{makeid(identifier, false)}#{year}"
-#     end
+    def shortref(self, identifier, opts={}):
+        pubdate = next((d for d in self.date
+                        if d.type == BibliographicDateType.PUBLISHED), None)
+        year = "" if opts.get("no_year", False) or not pubdate else \
+            f":{pubdate.value('on', 'year')}"
+        if opts.get("all_parts") or self.all_parts:
+            year += ": All Parts"
 
-#     # @param opts [Hash]
-#     # @option opts [Nokogiri::XML::Builder] :builder XML builder
-#     # @option opts [Boolean] :bibdata
-#     # @option opts [Symbol, NilClass] :date_format (:short), :full
-#     # @option opts [String, Symbol] :lang language
-#     # @return [String] XML
-#     def to_xml(**opts, &block)
-#       if opts[:builder]
-#         render_xml **opts, &block
-#       else
-#         Nokogiri::XML::Builder.new(encoding: "UTF-8") do |xml|
-#           render_xml builder: xml, **opts, &block
-#         end.doc.root.to_xml
-#       end
-#     end
+        return f"{self.makeid(identifier, False)}{year}"
 
+    def to_xml(self, parent=None, opts={}):
+        return self.render_xml(parent, opts)
+
+# FIXME
 #     # @return [Hash]
-#     def to_hash # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+#     def to_hash
 #       hash = {}
 #       hash["id"] = id if id
 #       hash["title"] = single_element_array(title) if title&.any?
 #       hash["link"] = single_element_array(link) if link&.any?
 #       hash["type"] = type if type
-#       hash["docid"] = single_element_array(docidentifier) if docidentifier&.any?
+#       if docidentifier&.any?
+#         hash["docid"] = single_element_array(docidentifier)
+#       end
 #       hash["docnumber"] = docnumber if docnumber
 #       hash["date"] = single_element_array(date) if date&.any?
 #       if contributor&.any?
@@ -326,7 +202,9 @@ class BibliographicItem:
 #       hash["edition"] = edition if edition
 #       hash["version"] = version.to_hash if version
 #       hash["revdate"] = revdate if revdate
-#       hash["biblionote"] = single_element_array(biblionote) if biblionote&.any?
+#       if biblionote&.any?
+#         hash["biblionote"] = single_element_array(biblionote)
+#       end
 #       hash["language"] = single_element_array(language) if language&.any?
 #       hash["script"] = single_element_array(script) if script&.any?
 #       hash["formattedref"] = formattedref.to_hash if formattedref
@@ -359,371 +237,420 @@ class BibliographicItem:
 #       hash
 #     end
 
-#     # @param bibtex [BibTeX::Bibliography, NilClass]
-#     # @return [String]
-#     def to_bibtex(bibtex = nil) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength
-#       item = BibTeX::Entry.new
-#       item.type = bibtex_type
-#       item.key = id
-#       bibtex_title item
-#       item.edition = edition if edition
-#       bibtex_author item
-#       bibtex_contributor item
-#       item.address = place.first.name if place.any?
-#       bibtex_note item
-#       bibtex_relation item
-#       bibtex_extent item
-#       bibtex_date item
-#       bibtex_series item
-#       bibtex_classification item
-#       item.keywords = keyword.map(&:content).join(", ") if keyword.any?
-#       bibtex_docidentifier item
-#       item.timestamp = fetched.to_s if fetched
-#       bibtex_link item
-#       bibtex ||= BibTeX::Bibliography.new
-#       bibtex << item
-#       bibtex.to_s
-#     end
+    def to_bibtex(self, bibtex: BibDatabase = None) -> str:
+        item = {"ENTRYTYPE": self._bibtex_type(), "ID": self.id}
+        self._bibtex_title(item)
+        if self.edition:
+            item["edition"] = self.edition
+        self._bibtex_author(item)
+        self._bibtex_contributor(item)
+        if any(self.place):
+            item["address"] = self.place[0].name
+        self._bibtex_note(item)
+        self._bibtex_relation(item)
+        self._bibtex_extent(item)
+        self._bibtex_date(item)
+        self._bibtex_series(item)
+        self._bibtex_classification(item)
+        if any(self.keyword):
+            item["keywords"] = ", ".join(list(map(lambda k: k.content,
+                                                  self.keyword)))
+        self._bibtex_docidentifier(item)
+        if self.fetched:
+            item["timestamp"] = datetime.datetime.strftime(self.fetched,
+                                                           "%Y-%m-%d")
+        self._bibtex_link(item)
+        if not bibtex:
+            bibtex = BibDatabase()
+        bibtex.entries.append(item)
+        writer = BibTexWriter()
+        writer.indent = '  '
+        writer.common_strings = True
+        writer.display_order = (
+            "tile",
+            "edition",
+            "author",
+            "publisher",
+            "institution",
+            "address",
+            "note",
+            "annote",
+            "howpublished",
+            "comment",
+            "content",
+            "booktitle",
+            "chapter",
+            "pages",
+            "volume",
+            "year",
+            "month",
+            "urldate",
+            "journal",
+            "number",
+            "series",
+            "type",
+            "mendeley-tags",
+            "mendeley",
+            "keywords",
+            "isbn",
+            "lccn",
+            "issn",
+            "timestamp",
+            "url",
+            "doi",
+            "file2",
+            "month_numeric")
+        return bibtexparser.dumps(bibtex, writer)
 
-#     # @param lang [String, nil] language code Iso639
-#     # @return [RelatonIsoBib::TypedTitleStringCollection]
-#     def title(lang: nil)
-#       @title.lang lang
-#     end
+    def title_for_lang(self, lang=None):
+        return self.title.lang(lang)
 
-#     # @param type [Symbol] type of url, can be :src/:obp/:rss
-#     # @return [String]
-#     def url(type = :src)
-#       @link.detect { |s| s.type == type.to_s }&.content&.to_s
-#     end
+    def url(self, link_type="src"):
+        link = next((s for s in self.link if s.type == link_type), None)
+        return link.content if link else None
 
-#     def abstract=(value)
-#       @abstract = value
-#     end
+    def disable_id_attribute(self):
+        self._id_attribute = False
 
-#     def deep_clone
-#       dump = Marshal.dump self
-#       Marshal.load dump # rubocop:disable Security/MarshalLoad
-#     end
+    def to_all_parts(self):
+        """remove title part components and abstract"""
+        me = copy.deepcopy(self)
+        me.disable_id_attribute()
+        me.relation.append(DocumentRelation(
+            type=DocumentRelation.Type.instance,
+            bibitem=self))
+        for lang in me.language:
+            me.title.delete_title_part()
+            tm_en = " - ".join([t.title.content for t in me.title
+                                if t.type != TypedTitleString.Type.MAIN
+                                and lang in t.title.language])
+            t = next((t.title for t in me.title
+                      if t.type == TypedTitleString.Type.MAIN
+                      and lang in t.title.language), None)
+            if t:
+                t.content = tm_en
+        me.abstract = []
+        for di in me.docidentifier:
+            di.remove_part()
+            di.all_parts()
+            di.remove_date()
+        me.structuredidentifier.remove_part()
+        me.structuredidentifier.all_parts()
+        me.structuredidentifier.remove_date()
+        me.all_parts = True
+        return me
 
-#     def disable_id_attribute
-#       @id_attribute = false
-#     end
+    def to_most_recent_reference(self):
+        me = copy.deepcopy(self)
+        self.disable_id_attribute()
+        me.relation.append(DocumentRelation(
+            type=DocumentRelation.Type.instance,
+            bibitem=self))
+        me.abstract = []
+        me.date = []
+        for di in me.docidentifier:
+            di.remove_date()
+        si = me.structuredidentifier
+        if si:
+            si.remove_date()
+        if me.id:
+            me.id = re.sub(r"-[12]\d\d\d", "", me.id)
+        return me
 
-#     # remove title part components and abstract
-#     def to_all_parts # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength,Metrics/PerceivedComplexity
-#       me = deep_clone
-#       me.disable_id_attribute
-#       me.relation << DocumentRelation.new(type: "instance", bibitem: self)
-#       me.language.each do |l|
-#         me.title.delete_title_part!
-#         ttl = me.title.select do |t|
-#           t.type != "main" && t.title.language&.include?(l)
-#         end
-#         tm_en = ttl.map { |t| t.title.content }.join " – "
-#         me.title.detect do |t|
-#           t.type == "main" && t.title.language&.include?(l)
-#         end&.title&.content = tm_en
-#       end
-#       me.abstract = []
-#       me.docidentifier.each(&:remove_part)
-#       me.docidentifier.each(&:all_parts)
-#       me.structuredidentifier.remove_part
-#       me.structuredidentifier.all_parts
-#       me.docidentifier.each &:remove_date
-#       me.structuredidentifier&.remove_date
-#       me.all_parts = true
-#       me
-#     end
+    def revdate(self):
+        """If revision_date exists then returns it
+           else returns published date or None"""
+        if self.rev_date:
+            return self.rev_date
 
-#     # convert ISO:yyyy reference to reference to most recent
-#     # instance of reference, removing date-specific infomration:
-#     # date of publication, abstracts. Make dated reference Instance relation
-#     # of the redacated document
-#     def to_most_recent_reference
-#       me = deep_clone
-#       disable_id_attribute
-#       me.relation << DocumentRelation.new(type: "instance", bibitem: self)
-#       me.abstract = []
-#       me.date = []
-#       me.docidentifier.each &:remove_date
-#       me.structuredidentifier&.remove_date
-#       me.id&.sub! /-[12]\d\d\d/, ""
-#       me
-#     end
-
-#     # If revision_date exists then returns it else returns published date or nil
-#     # @return [String, NilClass]
-#     def revdate # rubocop:disable Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
-#       @revdate ||= if version&.revision_date
-#                      version.revision_date
-#                    else
-#                      date.detect { |d| d.type == "published" }&.on&.to_s
-#                    end
-#     end
+        if self.version and self.version.revision_date:
+            self.rev_date = self.version.revision_date
+        else:
+            published = next(
+                (d.on for d in self.date
+                    if d.type == BibliographicDateType.PUBLISHED),
+                None)
+            published = published
+        return self.rev_date
 
 #     # @param prefix [String]
 #     # @return [String]
-#     def to_asciibib(prefix = "") # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
-#       pref = prefix.empty? ? prefix : prefix + "."
-#       out = prefix.empty? ? "[%bibitem]\n== {blank}\n" : ""
-#       out += "#{pref}id:: #{id}\n" if id
-#       out += "#{pref}fetched:: #{fetched}\n" if fetched
-#       title.each { |t| out += t.to_asciibib(prefix, title.size) }
-#       out += "#{pref}type:: #{type}\n" if type
-#       docidentifier.each do |di|
-#         out += di.to_asciibib prefix, docidentifier.size
-#       end
-#       out += "#{pref}docnumber:: #{docnumber}\n" if docnumber
-#       out += "#{pref}edition:: #{edition}\n" if edition
-#       language.each { |l| out += "#{pref}language:: #{l}\n" }
-#       script.each { |s| out += "#{pref}script:: #{s}\n" }
-#       out += version.to_asciibib prefix if version
-#       biblionote&.each { |b| out += b.to_asciibib prefix, biblionote.size }
-#       out += status.to_asciibib prefix if status
-#       date.each { |d| out += d.to_asciibib prefix, date.size }
-#       abstract.each do |a|
-#         out += a.to_asciibib "#{pref}abstract", abstract.size
-#       end
-#       copyright.each { |c| out += c.to_asciibib prefix, copyright.size }
-#       link.each { |l| out += l.to_asciibib prefix, link.size }
-#       out += medium.to_asciibib prefix if medium
-#       place.each { |pl| out += pl.to_asciibib prefix, place.size }
-#       extent.each { |ex| out += ex.to_asciibib "#{pref}extent", extent.size }
-#       accesslocation.each { |al| out += "#{pref}accesslocation:: #{al}\n" }
-#       classification.each do |cl|
-#         out += cl.to_asciibib prefix, classification.size
-#       end
-#       out += validity.to_asciibib prefix if validity
-#       contributor.each do |c|
-#         out += c.to_asciibib "contributor.*", contributor.size
-#       end
-#       out += relation.to_asciibib prefix if relation
-#       series.each { |s| out += s.to_asciibib prefix, series.size }
-#       out += "#{pref}doctype:: #{doctype}\n" if doctype
-#       out += "#{pref}formattedref:: #{formattedref}\n" if formattedref
-#       keyword.each { |kw| out += kw.to_asciibib "#{pref}keyword", keyword.size }
-#       out += editorialgroup.to_asciibib prefix if editorialgroup
-#       ics.each { |i| out += i.to_asciibib prefix, ics.size }
-#       out += structuredidentifier.to_asciibib prefix if structuredidentifier
-#       out
-#     end
+    def to_asciibib(self, prefix=""):
+        pref = f"{prefix}." if prefix else prefix
+        out = [] if prefix else ["[%bibitem]", "== {blank}"]
 
-#     private
+        # if self.id:
+        #     out.append(f"{pref}id:: {self.id}")
+        # if self.fetched:
+        #     out.append(f"{pref}fetched:: {self.fetched}")
+        # if self.title:
+        #     out += [t.to_asciibib(prefix, len(self.docidentifier))
+        #             for t in self.title]
+        # if self.type:
+        #     out.append(f"{pref}type:: {self.type}")
+        # if self.docidentifier:
+        #     out += [di.to_asciibib(prefix, len(self.docidentifier))
+        #             for di in self.docidentifier]
+        # if self.docnumber:
+        #     out.append(f"{pref}docnumber:: {self.docnumber}")
+        # if self.edition:
+        #     out.append(f"{pref}edition:: {self.edition}")
+        # if self.language:
+        #     out += [f"{pref}language:: {l}" for l in self.language]
+        # if self.script:
+        #     out += [f"{pref}script:: {s}" for s in self.script]
+        # if self.version:
+        #     out.append(self.version.to_asciibib(prefix))
+        # if self.biblionote:
+        #     out += [di.to_asciibib(prefix, len(self.docidentifier))
+        #             for di in self.docidentifier]
 
-#     # @return [String]
-#     def bibtex_title(item)
-#       title.each do |t|
-#         case t.type
-#         when "main" then item.tile = t.title.content
-#         end
-#       end
-#     end
+        order = ["id", "fetched", "title", "type", "docidentifier",
+                 "docnumber", "edition", "language", "script", "version",
+                 "biblionote", "status", "date", "abstract", "copyright",
+                 "link", "medium", "place", "extent", "accesslocation",
+                 "classification", "validity", "contributor", "relation",
+                 "series", "doctype", "formattedref", "keyword",
+                 "editorialgroup", "ics", "structuredidentifier"]
 
-#     # @return [String]
-#     def bibtex_type
-#       case type
-#       when "standard", nil then "misc"
-#       else type
-#       end
-#     end
+        for prop in order:
+            value = getattr(self, prop)
 
-#     # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+            if hasattr(value, '__iter__'):
+                if len(value) == 0:
+                    continue
+                if is_dataclass(value[0]):
+                    p = prefix
+                    if prop in ["abstract", "extent", "accesslocation",
+                                "keyword"]:
+                        p = f"{pref}{prop}"
+                    elif prop == "contributor":
+                        p = "contributor.*"
+                    out += [v.to_asciibib(p, len(value)) for v in value]
+                else:
+                    out += [f"{pref}{prop}:: {v}" for v in value]
+            elif is_dataclass(value):
+                out.append(value.to_asciibib(prefix))
+            elif value:
+                out.append(f"{pref}{prop}:: {value}")
 
-#     # @param [BibTeX::Entry]
-#     def bibtex_author(item) # rubocop:disable Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
-#       authors = contributor.select do |c|
-#         c.entity.is_a?(Person) && c.role.map(&:type).include?("author")
-#       end.map &:entity
+        return "\n".join(out)
 
-#       return unless authors.any?
+    def _bibtex_title(self, item: dict):
+        for t in self.title:
+            if t.type == TypedTitleString.Type.MAIN:
+                item["tile"] = t.title.content
 
-#       item.author = authors.map do |a|
-#         if a.name.surname
-#           "#{a.name.surname}, #{a.name.forename.map(&:to_s).join(' ')}"
-#         else
-#           a.name.completename.to_s
-#         end
-#       end.join " and "
-#     end
+    def _bibtex_type(self):
+        if not self.type or self.type == BibliographicItemType.STANDARD:
+            return "misc"
+        return self.type
 
-#     # @param [BibTeX::Entry]
-#     def bibtex_contributor(item) # rubocop:disable Metrics/CyclomaticComplexity
-#       contributor.each do |c|
-#         rls = c.role.map(&:type)
-#         if rls.include?("publisher") then item.publisher = c.entity.name
-#         elsif rls.include?("distributor")
-#           case type
-#           when "techreport" then item.institution = c.entity.name
-#           when "inproceedings", "conference", "manual", "proceedings"
-#             item.organization = c.entity.name
-#           when "mastersthesis", "phdthesis" then item.school = c.entity.name
-#           end
-#         end
-#       end
-#     end
-#     # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
+    def _bibtex_author(self, item: dict):
+        def filter_authors(c):
+            return isinstance(c.entity, Person) and \
+                ContributorRoleType.AUTHOR in list(
+                    map(lambda r: r.type, c.role))
+        authors = list(
+            map(lambda x: x.entity,
+                list(filter(filter_authors, self.contributor))))
+        if not any(authors):
+            return
 
-#     # @param [BibTeX::Entry]
-#     def bibtex_note(item) # rubocop:disable Metrics/CyclomaticComplexity,Metrics/AbcSize
-#       biblionote.each do |n|
-#         case n.type
-#         when "annote" then item.annote = n.content
-#         when "howpublished" then item.howpublished = n.content
-#         when "comment" then item.comment = n.content
-#         when "tableOfContents" then item.content = n.content
-#         when nil then item.note = n.content
-#         end
-#       end
-#     end
+        authors_view = []
+        for a in authors:
+            if a.name.surname:
+                fornames = " ".join(
+                    list(map(lambda fn: str(fn), a.name.forename)))
+                authors_view.append(f"{str(a.name.surname)}, {fornames}")
+            else:
+                authors_view.append(str(a.name.completename))
 
-#     # @param [BibTeX::Entry]
-#     def bibtex_relation(item)
-#       rel = relation.detect { |r| r.type == "partOf" }
-#       if rel
-#         title_main = rel.bibitem.title.detect { |t| t.type == "main" }
-#         item.booktitle = title_main.title.content
-#       end
-#     end
+        item["author"] = " and ".join(authors_view)
 
-#     # @param [BibTeX::Entry]
-#     def bibtex_extent(item)
-#       extent.each do |e|
-#         case e.type
-#         when "chapter" then item.chapter = e.reference_from
-#         when "page"
-#           value = e.reference_from
-#           value += "-#{e.reference_to}" if e.reference_to
-#           item.pages = value
-#         when "volume" then item.volume = e.reference_from
-#         end
-#       end
-#     end
+    def _bibtex_contributor(self, item: dict):
+        for c in self.contributor:
+            role_types = list(map(lambda r: r.type, c.role))
 
-#     # @param [BibTeX::Entry]
-#     def bibtex_date(item)
-#       date.each do |d|
-#         case d.type
-#         when "published"
-#           item.year = d.on :year
-#           item.month = d.on :month
-#         when "accessed" then item.urldate = d.on.to_s
-#         end
-#       end
-#     end
+            inst_name = None
+            if ContributorRoleType.PUBLISHER in role_types:
+                inst_name = "publisher"
+            elif ContributorRoleType.DISTRIBUTOR in role_types:
+                inst_name = None
+                if self.type == BibliographicItemType.TECHREPORT:
+                    inst_name = "institution"
+                elif self.type in [BibliographicItemType.INPROCEEDINGS,
+                                   BibliographicItemType.CONFERENCE,
+                                   BibliographicItemType.MANUAL,
+                                   BibliographicItemType.PROCEEDINGS]:
+                    inst_name = "organization"
+                elif self.type in ["mastersthesis", "phdthesis"]:
+                    inst_name = "school"
 
-#     # @param [BibTeX::Entry]
-#     def bibtex_series(item)
-#       series.each do |s|
-#         case s.type
-#         when "journal"
-#           item.journal = s.title.title
-#           item.number = s.number if s.number
-#         when nil then item.series = s.title.title
-#         end
-#       end
-#     end
+            if inst_name:
+                item[inst_name] = c.entity.bib_name()
 
-#     # @param [BibTeX::Entry]
-#     def bibtex_classification(item)
-#       classification.each do |c|
-#         case c.type
-#         when "type" then item["type"] = c.value
-#         # when "keyword" then item.keywords = c.value
-#         when "mendeley" then item["mendeley-tags"] = c.value
-#         end
-#       end
-#     end
+    def _bibtex_note(self, item: dict):
+        mapping = {
+            "annote": "annote",
+            "howpublished": "howpublished",
+            "comment": "comment",
+            "tableOfContents": "content",
+            None: "note"
+        }
+        for n in self.biblionote:
+            if n.type in mapping.keys():
+                item[mapping[n.type]] = n.content
 
-#     # @param [BibTeX::Entry]
-#     def bibtex_docidentifier(item)
-#       docidentifier.each do |i|
-#         case i.type
-#         when "isbn" then item.isbn = i.id
-#         when "lccn" then item.lccn = i.id
-#         when "issn" then item.issn = i.id
-#         end
-#       end
-#     end
+    def _bibtex_relation(self, item: dict):
+        rel = next(
+            (r for r in self.relation
+             if r.type == DocumentRelation.Type.partOf), None)
+        if rel:
+            title_main = next(
+                (r
+                 for r in rel.bibitem.title
+                 if r.type == TypedTitleString.Type.MAIN), None)
+            item["booktitle"] = title_main.title.content
 
-#     # @param [BibTeX::Entry]
-#     def bibtex_link(item)
-#       link.each do |l|
-#         case l.type
-#         when "doi" then item.doi = l.content
-#         when "file" then item.file2 = l.content
-#         when "src" then item.url = l.content
-#         end
-#       end
-#     end
+    def _bibtex_extent(self, item: dict):
+        for e in self.extent:
+            if e.type in ["chapter", "volume"]:
+                item[e.type] = e.reference_from
+            elif e.type == "page":
+                value = e.reference_from
+                if e.reference_to:
+                    value += f"-{e.reference_to}"
+                item["pages"] = value
 
-#     # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
-#     # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
-#     # rubocop:disable Style/NestedParenthesizedCalls, Metrics/BlockLength
+    def _bibtex_date(self, item: dict):
+        for d in self.date:
+            if d.type == BibliographicDateType.PUBLISHED:
+                item["year"] = str(d.value("on", "year"))
+                month_num = d.value("on", "month")
+                month_name = datetime.date(1900, month_num, 1).strftime('%b')
+                item["month"] = month_name.lower()
+                item["month_numeric"] = str(month_num)
+            elif d.type == BibliographicDateType.ACCESSED:
+                item["urldate"] = d.value("on")
 
-#     # @param opts [Hash]
-#     # @option opts [Nokogiri::XML::Builder] :builder XML builder
-#     # @option opts [Boolean] bibdata
-#     # @option opts [Symbol, NilClass] :date_format (:short), :full
-#     # @option opts [String] :lang language
-#     def render_xml(**opts)
-#       root = opts[:bibdata] ? :bibdata : :bibitem
-#       xml = opts[:builder].send(root) do |builder|
-#         builder.fetched fetched if fetched
-#         title.to_xml **opts
-#         formattedref&.to_xml builder
-#         link.each { |s| s.to_xml builder }
-#         docidentifier.each { |di| di.to_xml **opts }
-#         builder.docnumber docnumber if docnumber
-#         date.each { |d| d.to_xml builder, **opts }
-#         contributor.each do |c|
-#           builder.contributor do
-#             c.role.each { |r| r.to_xml **opts }
-#             c.to_xml **opts
-#           end
-#         end
-#         builder.edition edition if edition
-#         version&.to_xml builder
-#         biblionote.to_xml **opts
-#         opts[:note]&.each do |n|
-#           builder.note(n[:text], format: "text/plain", type: n[:type])
-#         end
-#         language.each { |l| builder.language l }
-#         script.each { |s| builder.script s }
-#         abstr = abstract.select { |ab| ab.language&.include? opts[:lang] }
-#         abstr = abstract unless abstr.any?
-#         abstr.each { |a| builder.abstract { a.to_xml(builder) } }
-#         status&.to_xml builder
-#         copyright&.each { |c| c.to_xml **opts }
-#         relation.each { |r| r.to_xml builder, **opts }
-#         series.each { |s| s.to_xml builder }
-#         medium&.to_xml builder
-#         place.each { |pl| pl.to_xml builder }
-#         extent.each { |e| builder.extent { e.to_xml builder } }
-#         accesslocation.each { |al| builder.accesslocation al }
-#         license.each { |l| builder.license l }
-#         classification.each { |cls| cls.to_xml builder }
-#         kwrd = keyword.select { |kw| kw.language&.include? opts[:lang] }
-#         kwrd = keyword unless kwrd.any?
-#         kwrd.each { |kw| builder.keyword { kw.to_xml(builder) } }
-#         validity&.to_xml builder
-#         if block_given? then yield builder
-#         elsif opts[:bibdata] && (doctype || editorialgroup || ics&.any? ||
-#                                  structuredidentifier&.presence?)
-#           builder.ext do |b|
-#             b.doctype doctype if doctype
-#             editorialgroup&.to_xml b
-#             ics.each { |i| i.to_xml b }
-#             structuredidentifier&.to_xml b
-#           end
-#         end
-#       end
-#       xml[:id] = id if id && !opts[:bibdata] && !opts[:embedded]
-#       xml[:type] = type if type
-#       xml
-#     end
-#     # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
-#     # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
-#     # rubocop:enable Style/NestedParenthesizedCalls, Metrics/BlockLength
-#   end
-# end
+    def _bibtex_series(self, item: dict):
+        for s in self.series:
+            if s.type == SeriesType.JOURNAL:
+                item["journal"] = str(s.title.title.content)
+                if s.number:
+                    item["number"] = s.number
+            elif not s.type:
+                item["series"] = str(s.title.title)
+
+    def _bibtex_classification(self, item: dict):
+        mapping = {"type": "type", "mendeley": "mendeley-tags"}
+        for c in self.classification:
+            if c.type in mapping:
+                item[mapping[c.type]] = c.value
+
+    def _bibtex_docidentifier(self, item: dict):
+        for i in self.docidentifier:
+            if i.type in ["isbn", "lccn", "issn"]:
+                item[i.type] = i.id
+
+    def _bibtex_link(self, item: dict):
+        mapping = {"doi": "doi", "file": "file2", "src": "url"}
+        for l in self.link:
+            if l.type in mapping:
+                item[mapping[l.type]] = l.content
+
+    def render_xml(self, parent: ET.Element, opts: dict) -> ET.Element:
+        bibdata = opts.get("bibdata")
+        lang = opts.get("lang")
+        name = "bibdata" if opts.get("bibdata") else "bibitem"
+        root = ET.Element(name) if parent is None \
+            else ET.SubElement(parent, name)
+        if self.fetched:
+            ET.SubElement(root, "fetched").text = self.fetched.strftime("%Y-%m-%d")
+        self.title.to_xml(root, opts)
+        if self.formattedref:
+            self.formattedref.to_xml(root)
+        for s in self.link:
+            s.to_xml(root, opts)
+        for di in self.docidentifier:
+            di.to_xml(root, opts)
+        if self.docnumber:
+            ET.SubElement(root, "docnumber").text = self.docnumber
+        for d in self.date:
+            d.to_xml(root, opts)
+        for c in self.contributor:
+            node = ET.SubElement(root, "contributor")
+            for r in c.role:
+                r.to_xml(node, opts)
+            c.to_xml(node, opts)
+        if self.edition:
+            ET.SubElement(root, "edition").text = self.edition
+        if self.version:
+            self.version.to_xml(root)
+        if self.biblionote:
+            self.biblionote.to_xml(root, opts)
+        if hasattr(opts.get("note"), "__iter__"):
+            for n in opts["note"]:
+                node = ET.SubElement(root, "note")
+                node.text = n.get("text")
+                node.attrib["format"] = "text/plain"
+                node.attrib["type"] = n.get("type")
+        for l in self.language:
+            ET.SubElement(root, "language").text = l
+        for s in self.script:
+            ET.SubElement(root, "script").text = s
+        abstr = list(filter(
+            lambda ab: ab.language and lang in ab.language, self.abstract))
+        abstr = abstr if any(abstr) else self.abstract
+        for a in abstr:
+            a.to_xml(ET.SubElement(root, "abstract"))
+        if self.status:
+            self.status.to_xml(root)
+        for c in self.copyright:
+            c.to_xml(root, opts)
+        for r in self.relation:
+            r.to_xml(root, opts)
+        for s in self.series:
+            s.to_xml(root, opts)
+        if self.medium:
+            self.medium.to_xml(root)
+        for pl in self.place:
+            pl.to_xml(root)
+        for e in self.extent:
+            e.to_xml(ET.SubElement(root, "extent"))
+        for al in self.accesslocation:
+            ET.SubElement(root, "accesslocation").text = al
+        for al in self.license:
+            ET.SubElement(root, "license").text = al
+        for cl in self.classification:
+            cl.to_xml(root)
+        kwrd = list(filter(
+            lambda k: k.language and lang in k.language, self.keyword))
+        kwrd = kwrd if any(kwrd) else self.keyword
+        for kw in kwrd:
+            kw.to_xml(ET.SubElement(root, "keyword"))
+        if self.validity:
+            self.validity.to_xml(root)
+        if opts.get("lambda"):
+            opts["lambda"](root, opts)
+        elif bibdata and (self.doctype or self.editorialgroup
+                          or (self.ics and any(self.ics))
+                          or (self.structuredIdentifier
+                              and self.structuredIdentifier.presence)):
+            ext = ET.SubElement(root, "ext")
+            if self.doctype:
+                ET.SubElement(ext, "doctype").text = self.doctype
+            if self.subdoctype:
+                ET.SubElement(ext, "subdoctype").text = self.subdoctype
+            if self.editorialgroup:
+                self.editorialgroup.to_xml(ext)
+            for i in self.ics:
+                i.to_xml(ext)
+            if self.structuredidentifier:
+                self.structuredidentifier.to_xml(ext)
+        if self.id and not bibdata and not opts.get("embedded"):
+            root.attrib["id"] = self.id
+        if self.type:
+            root.attrib["type"] = self.type.value
+        return root

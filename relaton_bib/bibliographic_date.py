@@ -10,7 +10,7 @@ from typing import Optional, ClassVar
 from .relaton_bib import parse_date
 
 
-class BibliographicDateType(Enum):
+class BibliographicDateType(str, Enum):
     PUBLISHED = "published"
     ACCESSED = "accessed"
     CREATED = "created"
@@ -73,16 +73,16 @@ class BibliographicDate:
             if no_year:
                 on_node.text = self.NO_YEAR
             else:
-                on_node.text = self._date_format(self.on, date_format)
+                on_node.text = self.date_format(self.on, date_format)
         elif self.from_:
             form_node = ET.SubElement(result, "from")
             if no_year:
                 form_node.text = self.NO_YEAR
             else:
-                form_node.text = self._date_format(self.from_, date_format)
+                form_node.text = self.date_format(self.from_, date_format)
                 if self.to:
                     to_node = ET.SubElement(result, "to")
-                    to_node.text = self._date_format(self.to, date_format)
+                    to_node.text = self.date_format(self.to, date_format)
 
         return result
 
@@ -98,7 +98,20 @@ class BibliographicDate:
             out.append(f"{pref}date.to:: #{self.to}")
         return "\n".join(out + [""])
 
-    # TODO make properties readable for on, from_, to
+    def value(self, prop="on", part=None):
+        return self._process_date(getattr(self, prop), part)
+
+    def date_format(self, date, fmt_name=None):
+        if fmt_name == "short":
+            fmt = "%Y-%m"
+        elif fmt_name == "full":
+            fmt = "%Y-%m-%d"
+        else:
+            return date
+
+        date = self._parse_date(date)
+
+        return date.strftime(fmt) if isinstance(date, datetime.date) else date
 
     def _process_date(self, date, part=None):
         if not (date and part):
@@ -110,18 +123,6 @@ class BibliographicDate:
             return date
 
         return getattr(date, part) if isinstance(date, datetime.date) else date
-
-    def _date_format(self, date, fmt_name=None):
-        if fmt_name == "short":
-            fmt = "%Y-%m"
-        elif fmt_name == "full":
-            fmt = "%Y-%m-%d"
-        else:
-            return date
-
-        date = self._parse_date(date)
-
-        return date.strftime(fmt) if isinstance(date, datetime.date) else date
 
     def _parse_date(self, date):
         if re.match(r"^\d{4}-\d{2}-\d{2}", date):

@@ -10,7 +10,7 @@ class TypedUri:
 
     # to_hash -> dataclasses.asdict
 
-    def to_xml(self, parent=None):
+    def to_xml(self, parent=None, opts={}):
         name = "uri"
         node = ET.Element(name) if parent is None \
             else ET.SubElement(parent, name)
@@ -22,12 +22,6 @@ class TypedUri:
         return node
 
     def to_asciibib(self, prefix="", count=1):
-        """Return AsciiBib representation
-
-        Keyword arguments:
-        prefix -- AsciiBib prefix
-        count -- number of links
-        """
         pref = f"{prefix}.link" if prefix else "link"
         out = [f"{pref}::"] if count > 1 else []
         if self.type:

@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 @dataclass(frozen=True)
 class Classification:
     value: str
-    type: Optional[str] = None
+    type: str = None
 
     def to_xml(self, parent):
         name = "classification"

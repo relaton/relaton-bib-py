@@ -24,7 +24,7 @@ def test_note_to_xml(biblio_note):
     result = biblio_note.to_xml(host)
 
     assert result.attrib["type"] == "type"
-    assert host.find("./node").text == "content"
+    assert host.find("./note").text == "content"
 
 
 def test_note_to_asciibib(biblio_note):
@@ -47,16 +47,18 @@ def test_note_collecion_to_xml(bibnote_collection):
     host = ET.Element("host")
     result = bibnote_collection.to_xml(host, {"lang": "en"})
 
-    assert len(host.findall("./node")) == 1
-    assert host.find("./node").text == "content1"
-    assert host.find("./node").attrib["language"] == "en"
+    assert result is not None
+    assert len(host.findall("./note")) == 1
+    assert host.find("./note").text == "content1"
+    assert host.find("./note").attrib["language"] == "en"
 
 
 def test_note_collecion_to_xml_lang_not_found(bibnote_collection):
     host = ET.Element("host")
     result = bibnote_collection.to_xml(host, {"lang": "xx"})
 
-    assert len(host.findall("./node")) == 2
+    assert result is not None
+    assert len(host.findall("./note")) == 2
 
 
 def test_note_collecion_hash(bibnote_collection):

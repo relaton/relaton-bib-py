@@ -5,7 +5,7 @@ import pytest
 import xml.etree.ElementTree as ET
 
 from relaton_bib.structured_identifier import StructuredIdentifier, \
-                                              StructuredIdentifierCollection
+    StructuredIdentifierCollection
 from relaton_bib.document_identifier import DocumentIdType
 
 
@@ -23,7 +23,7 @@ def subject():
         docnumber="AGNT-007",
         type=DocumentIdType.CN_STD.value,
         agency=["agncy1", "agency2"],
-        klass="class",
+        class_="class",
         partnumber="1",
         edition="2",
         version="3.4.5",
@@ -40,7 +40,7 @@ def test_to_xml(subject):
     assert host.find("./structuredidentifier") is not None
     assert result.attrib["type"] == DocumentIdType.CN_STD.value
     assert len(result.findall("./agency")) == 2
-    assert result.find("./class_").text == "class"
+    assert result.find("./class").text == "class"
     assert result.find("./docnumber").text == "AGNT-007"
     assert result.find("./partnumber").text == "1"
     assert result.find("./edition").text == "2"
@@ -92,7 +92,7 @@ def test_hash(subject):
 
     assert result["type"] == DocumentIdType.CN_STD.value
     assert len(result["agency"]) == 2
-    assert result["klass"] == "class"
+    assert result["class_"] == "class"
     assert result["docnumber"] == "AGNT-007"
     assert result["partnumber"] == "1"
     assert result["edition"] == "2"
