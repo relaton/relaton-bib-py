@@ -1,7 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass, field, InitVar
 from enum import Enum
-from typing import List, Union
+from typing import List, Union, Tuple
 
 import re
 import xml.etree.ElementTree as ET
@@ -24,7 +24,8 @@ class TypedTitleString:
     content: InitVar[Union[str, List[LocalizedString]]] = field(default=None)
     language: InitVar[List[str]] = field(default=[])
     script: InitVar[List[str]] = field(default=list())
-    format: InitVar[str] = field(default=FormattedStringFormat.TEXT_PLAIN.value)
+    format: InitVar[str] = field(
+        default=FormattedStringFormat.TEXT_PLAIN.value)
 
     def __post_init__(self, content, language, script, format):
         if self.title is None and content is None:
@@ -60,7 +61,7 @@ class TypedTitleString:
         return TypedTitleStringCollection(tts)
 
     @classmethod
-    def split_title(cls, title) -> (str, str, str):
+    def split_title(cls, title) -> Tuple[str, str, str]:
         ttls = re.sub(r"\w\.Imp\s?\d+\u00A0:\u00A0", "", title).split(" - ")
         if len(ttls) < 2:
             return [None, str(ttls[0]), None]
@@ -68,7 +69,7 @@ class TypedTitleString:
             return cls.intro_or_part(ttls)
 
     @classmethod
-    def intro_or_part(cls, ttls) -> (str, str, str):
+    def intro_or_part(cls, ttls) -> Tuple[str, str, str]:
         if re.match(r"^(Part|Partie) \d+:", ttls[1]):
             return (None, ttls[0], " -- ".join(ttls[1:]))
         else:

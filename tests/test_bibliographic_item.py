@@ -504,7 +504,7 @@ def test_render_only_fr_lang_tagged_string(subject: BibliographicItem):
                         "bibdata_item_fr.xml")
     tree = ET.parse(file)
     reference = tree.getroot()
-    
+
     subject_xml = subject.to_xml(opts={"bibdata": True, "lang": "fr"})
     assert elements_equal(reference, subject_xml)
 

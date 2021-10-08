@@ -18,6 +18,11 @@ class FormattedStringFormat(str, Enum):
 class FormattedString(LocalizedString):
     format: str = field(default=FormattedStringFormat.TEXT_PLAIN.value)
 
+    def __post_init__(self):
+        super().__post_init__()
+        if isinstance(self.format, FormattedStringFormat):
+            object.__setattr__(self, "format", self.format.value)
+
     def to_xml(self, parent):
         if self.format:
             parent.attrib["format"] = self.format

@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List
 
+from .localized_string import LocalizedString
+
 
 class BibItemLocalityType(str, Enum):
     SECTION = "section"
@@ -35,8 +37,8 @@ class BibItemLocality:
     """Bibliographic item locality."""
 
     type: str
-    reference_from: str
-    reference_to: str = None
+    reference_from: LocalizedString
+    reference_to: LocalizedString = None
 
     def __post_init__(self):
         if not (BibItemLocalityType.has_value(self.type)
@@ -47,16 +49,21 @@ class BibItemLocality:
         if isinstance(self.type, BibItemLocalityType):
             object.__setattr__(self, "type", self.type.value)
 
+        if isinstance(self.reference_from, str):
+            object.__setattr__(self, "reference_from",
+                               LocalizedString(self.reference_from))
+
+        if isinstance(self.reference_to, str):
+            object.__setattr__(self, "reference_to",
+                               LocalizedString(self.reference_to))
+
     def to_xml(self, parent):
         parent.attrib["type"] = self.type
-        ET.SubElement(parent, "referenceFrom").text = self.reference_from
+        ET.SubElement(parent, "referenceFrom").text = str(self.reference_from)
         if self.reference_to:
-            ET.SubElement(parent, "referenceTo").text = self.reference_to
+            ET.SubElement(parent, "referenceTo").text = str(self.reference_to)
         return parent
 
-    # @param prefix [String]
-    # @param count [Integeg] number of localities
-    # @return [String]
     def to_asciibib(self, prefix="", count=1):
         pref = prefix + "." if prefix else prefix
         out = [f"{prefix}::"] if count > 1 else []
@@ -73,9 +80,9 @@ class Locality(BibItemLocality):
     def to_xml(self, parent):
         node = ET.SubElement(parent, "locality")
         node.attrib["type"] = self.type
-        ET.SubElement(node, "referenceFrom").text = self.reference_from
+        ET.SubElement(node, "referenceFrom").text = str(self.reference_from)
         if self.reference_to:
-            ET.SubElement(node, "referenceTo").text = self.reference_to
+            ET.SubElement(node, "referenceTo").text = str(self.reference_to)
         return node
 
 

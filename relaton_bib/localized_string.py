@@ -40,6 +40,9 @@ class LocalizedString:
                                list(map(to_ds_instance(LocalizedString),
                                         self.content)))
 
+    def __format__(self, format_spec: str) -> str:
+        return str(self)
+
     def __str__(self):
         return self.content if isinstance(self.content, str) \
                             else str(self.content[0] if self.content else None)

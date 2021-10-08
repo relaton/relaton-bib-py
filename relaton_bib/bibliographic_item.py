@@ -130,14 +130,6 @@ class BibliographicItem:
 
         self.date = list(map(to_ds_instance(BibliographicDate), self.date))
 
-#       @contributor = (args[:contributor] || []).map do |c|
-#         if c.is_a? Hash
-#           e = c[:entity].is_a?(Hash) ? Organization.new(**c[:entity]) : c[:entity]
-#           ContributionInfo.new(entity: e, role: c[:role])
-#         else c
-#         end
-#       end
-
         self.abstract = list(map(to_ds_instance(FormattedString),
                                  self.abstract))
 
@@ -150,6 +142,8 @@ class BibliographicItem:
         self.link = list(map(to_ds_instance(TypedUri), self.link))
         self.place = list(map(to_ds_instance(Place), self.place))
         self.keyword = list(map(to_ds_instance(LocalizedString), self.keyword))
+        if isinstance(self.type, BibliographicItemType):
+            self.type = self.type.value
 
     def abstract_for_lang(self, lang=None):
         if lang:
@@ -501,9 +495,9 @@ class BibliographicItem:
     def _bibtex_extent(self, item: dict):
         for e in self.extent:
             if e.type in ["chapter", "volume"]:
-                item[e.type] = e.reference_from
+                item[e.type] = str(e.reference_from)
             elif e.type == "page":
-                value = e.reference_from
+                value = str(e.reference_from)
                 if e.reference_to:
                     value += f"-{e.reference_to}"
                 item["pages"] = value
@@ -638,5 +632,5 @@ class BibliographicItem:
         if self.id and not bibdata and not opts.get("embedded"):
             root.attrib["id"] = self.id
         if self.type:
-            root.attrib["type"] = self.type.value
+            root.attrib["type"] = self.type
         return root

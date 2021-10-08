@@ -85,8 +85,8 @@ def test_hash_all_props():
     result = dataclasses.asdict(bib_item)
 
     assert result["type"] == BibItemLocalityType.SECTION.value
-    assert result["reference_from"] == "from"
-    assert result["reference_to"] == "to"
+    assert result["reference_from"]["content"] == "from"
+    assert result["reference_to"]["content"] == "to"
 
 
 def test_hash_only_required_props():
@@ -97,4 +97,4 @@ def test_hash_only_required_props():
     result = dataclasses.asdict(bib_item)
 
     assert result["type"] == BibItemLocalityType.SECTION.value
-    assert result["reference_from"] == "from"
+    assert result["reference_from"]["content"] == "from"

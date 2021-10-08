@@ -5,10 +5,11 @@ import logging
 import xml.etree.ElementTree as ET
 
 
-class ContactType(Enum):
+class ContactType(str, Enum):
     PHONE = "phone"
     EMAIL = "email"
     URI = "uri"
+    ADDRESS = "address"
 
     @classmethod
     def has_value(cls, value):

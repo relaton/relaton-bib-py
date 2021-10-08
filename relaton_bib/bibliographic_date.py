@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, ClassVar
+from typing import ClassVar
 
 from .relaton_bib import parse_date
 
