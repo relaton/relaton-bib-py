@@ -15,7 +15,7 @@ def test_to_xml_all_props():
     host = ET.Element("host")
     result = bib_item.to_xml(host)
 
-    assert host.attrib["type"] == BibItemLocalityType.SECTION.value
+    assert result.attrib["type"] == BibItemLocalityType.SECTION.value
     assert host.find("./referenceFrom").text == "from"
     assert host.find("./referenceTo").text == "to"
 
@@ -28,7 +28,7 @@ def test_to_xml_only_required_props():
     host = ET.Element("host")
     result = bib_item.to_xml(host)
 
-    assert host.attrib["type"] == BibItemLocalityType.CLAUSE.value
+    assert result.attrib["type"] == BibItemLocalityType.CLAUSE.value
     assert host.find("./referenceFrom").text == "from"
     assert host.find("./referenceTo") is None
 
