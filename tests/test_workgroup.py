@@ -4,7 +4,7 @@ import pytest
 
 import xml.etree.ElementTree as ET
 
-from relaton_bib.workgroup import WorkGroup
+from relaton_bib import WorkGroup
 
 
 @pytest.fixture

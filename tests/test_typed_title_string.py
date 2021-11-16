@@ -4,9 +4,8 @@ import pytest
 
 import xml.etree.ElementTree as ET
 
-from relaton_bib.typed_title_string import TypedTitleString, \
-    TypedTitleStringCollection
-from relaton_bib.formatted_string import FormattedString
+from relaton_bib import TypedTitleString, \
+    TypedTitleStringCollection, FormattedString
 
 
 def test_missing_title_or_content():

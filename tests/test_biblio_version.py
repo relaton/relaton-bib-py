@@ -4,7 +4,7 @@ import pytest
 
 import xml.etree.ElementTree as ET
 
-from relaton_bib.biblio_version import BibliographicItemVersion
+from relaton_bib import BibliographicItemVersion
 
 
 @pytest.fixture

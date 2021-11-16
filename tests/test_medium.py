@@ -4,7 +4,7 @@ import pytest
 
 import xml.etree.ElementTree as ET
 
-from relaton_bib.medium import Medium
+from relaton_bib import Medium
 
 
 @pytest.fixture

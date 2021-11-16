@@ -5,7 +5,7 @@ import pytest
 
 import xml.etree.ElementTree as ET
 
-from relaton_bib.validity import Validity
+from relaton_bib import Validity
 
 
 @pytest.fixture

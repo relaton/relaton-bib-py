@@ -4,7 +4,7 @@ import pytest
 
 import xml.etree.ElementTree as ET
 
-from relaton_bib.document_identifier import DocumentIdentifier, DocumentIdType
+from relaton_bib import DocumentIdentifier, DocumentIdType
 
 
 @pytest.fixture

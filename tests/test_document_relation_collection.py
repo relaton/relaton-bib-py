@@ -1,13 +1,10 @@
 import dataclasses
-import inspect
 import pytest
 
 import xml.etree.ElementTree as ET
 
-from relaton_bib.document_relation_collection import DocRelationCollection
-from relaton_bib.document_relation import DocumentRelation
-from relaton_bib.formatted_ref import FormattedRef
-from relaton_bib.bibliographic_item import BibliographicItem
+from relaton_bib import DocRelationCollection, DocumentRelation, \
+    FormattedRef, BibliographicItem
 
 
 @pytest.fixture

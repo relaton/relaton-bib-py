@@ -4,9 +4,7 @@ import pytest
 
 import xml.etree.ElementTree as ET
 
-from relaton_bib.address import Address
-from relaton_bib.contact import Contact, ContactType
-from relaton_bib.contributor import Contributor
+from relaton_bib import Address, Contact, ContactType, Contributor
 
 
 @pytest.fixture

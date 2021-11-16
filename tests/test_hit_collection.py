@@ -1,7 +1,6 @@
 import pytest
 
-from relaton_bib.hit import Hit
-from relaton_bib.hit_collection import HitCollection
+from relaton_bib import Hit, HitCollection
 
 
 @pytest.fixture(autouse=True)

@@ -4,7 +4,7 @@ import pytest
 
 import xml.etree.ElementTree as ET
 
-from relaton_bib.document_status import DocumentStatus
+from relaton_bib import DocumentStatus
 
 
 def test_create_with_hash():

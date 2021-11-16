@@ -4,7 +4,7 @@ import pytest
 
 import xml.etree.ElementTree as ET
 
-from relaton_bib.ics import ICS
+from relaton_bib import ICS
 
 
 @pytest.fixture

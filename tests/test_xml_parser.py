@@ -3,8 +3,7 @@ import logging
 import xml.etree.ElementTree as ET
 
 from . import elements_equal
-from relaton_bib.bib_item_locality import LocalityStack, SourceLocalityStack
-from relaton_bib.xml_parser import from_xml
+from relaton_bib import LocalityStack, SourceLocalityStack, from_xml
 
 
 def test_creates_item_from_xml():

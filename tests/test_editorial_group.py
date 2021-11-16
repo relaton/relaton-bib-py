@@ -4,9 +4,7 @@ import pytest
 
 import xml.etree.ElementTree as ET
 
-from relaton_bib.editorial_group import EditorialGroup
-from relaton_bib.workgroup import WorkGroup
-from relaton_bib.technical_committee import TechnicalCommittee
+from relaton_bib import EditorialGroup, WorkGroup, TechnicalCommittee
 
 
 @pytest.fixture
@@ -15,7 +13,7 @@ def subject():
         TechnicalCommittee(WorkGroup(name="g1", number=1, type="work")),
         TechnicalCommittee(WorkGroup(name="g2", number=2)),
         TechnicalCommittee(WorkGroup(name="g3")),
-        ])
+    ])
 
 
 def test_to_xml(subject):

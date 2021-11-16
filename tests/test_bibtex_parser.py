@@ -1,7 +1,6 @@
 import inspect
 
-from relaton_bib.bibtex_parser import from_bibtex
-from relaton_bib.bibliographic_item import BibliographicItem
+from relaton_bib import from_bibtex, BibliographicItem
 
 
 def test_parse_BibTex():

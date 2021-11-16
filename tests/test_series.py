@@ -5,10 +5,9 @@ import inspect
 import logging
 import xml.etree.ElementTree as ET
 
-from relaton_bib.series import Series
-from relaton_bib.typed_title_string import TypedTitleString
-from relaton_bib.formatted_ref import FormattedRef
-from relaton_bib.localized_string import LocalizedString
+from relaton_bib import Series, TypedTitleString
+from relaton_bib import FormattedRef
+from relaton_bib import LocalizedString
 
 
 @pytest.fixture

@@ -4,9 +4,8 @@ import pytest
 
 import xml.etree.ElementTree as ET
 
-from relaton_bib.affiliation import Affiliation
-from relaton_bib.organization import Organization
-from relaton_bib.person import Person, FullName, PersonIdentifier
+from relaton_bib import Affiliation, Organization, Person, \
+    FullName, PersonIdentifier
 
 
 def test_fillname_without_args():

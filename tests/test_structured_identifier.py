@@ -4,9 +4,8 @@ import pytest
 
 import xml.etree.ElementTree as ET
 
-from relaton_bib.structured_identifier import StructuredIdentifier, \
-    StructuredIdentifierCollection
-from relaton_bib.document_identifier import DocumentIdType
+from relaton_bib import StructuredIdentifier, \
+    StructuredIdentifierCollection, DocumentIdType
 
 
 def test_remove_data_for_cn_std():

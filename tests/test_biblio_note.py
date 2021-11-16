@@ -4,7 +4,7 @@ import inspect
 import dataclasses
 import xml.etree.ElementTree as ET
 
-from relaton_bib.biblio_note import BiblioNote, BiblioNoteCollection
+from relaton_bib import BiblioNote, BiblioNoteCollection
 
 
 @pytest.fixture

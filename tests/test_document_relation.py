@@ -5,8 +5,7 @@ import logging
 
 import xml.etree.ElementTree as ET
 
-from relaton_bib.bibliographic_item import BibliographicItem
-from relaton_bib.document_relation import DocumentRelation
+from relaton_bib import BibliographicItem, DocumentRelation
 
 
 @pytest.fixture

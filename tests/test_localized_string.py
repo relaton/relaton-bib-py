@@ -2,7 +2,7 @@ import pytest
 
 import xml.etree.ElementTree as ET
 
-from relaton_bib.localized_string import LocalizedString
+from relaton_bib import LocalizedString
 
 
 def test_missin_props():

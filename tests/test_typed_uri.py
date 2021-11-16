@@ -4,7 +4,7 @@ import pytest
 
 import xml.etree.ElementTree as ET
 
-from relaton_bib.typed_uri import TypedUri
+from relaton_bib import TypedUri
 
 
 @pytest.fixture

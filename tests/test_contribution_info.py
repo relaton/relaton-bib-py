@@ -4,12 +4,10 @@ import logging
 import inspect
 import pytest
 
-
 import xml.etree.ElementTree as ET
 
-from relaton_bib.formatted_string import FormattedString
-from relaton_bib.contribution_info import ContributorRole, ContributionInfo
-from relaton_bib.organization import Organization
+from relaton_bib import FormattedString, ContributorRole, \
+    ContributionInfo, Organization
 
 
 @pytest.fixture

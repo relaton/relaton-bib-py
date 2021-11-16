@@ -4,7 +4,7 @@ import inspect
 import dataclasses
 import xml.etree.ElementTree as ET
 
-from relaton_bib.formatted_string import FormattedString, FormattedStringFormat
+from relaton_bib import FormattedString, FormattedStringFormat
 
 
 @pytest.fixture

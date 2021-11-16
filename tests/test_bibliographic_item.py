@@ -10,42 +10,39 @@ from lxml import etree
 
 from . import elements_equal
 
-from relaton_bib.bibliographic_item import BibliographicItem, \
-    BibliographicItemType
-from relaton_bib.address import Address
-from relaton_bib.contact import Contact
-from relaton_bib.affiliation import Affiliation
-from relaton_bib.typed_uri import TypedUri
-from relaton_bib.document_identifier import DocumentIdentifier, DocumentIdType
-from relaton_bib.copyright_association import CopyrightAssociation
-from relaton_bib.formatted_string import FormattedString, FormattedStringFormat
-from relaton_bib.contribution_info import ContributionInfo, ContributorRole
-from relaton_bib.bibliographic_date import BibliographicDate, \
-    BibliographicDateType
-from relaton_bib.series import Series, SeriesType
-from relaton_bib.document_status import DocumentStatus
-from relaton_bib.organization import Organization, OrgIdentifier
-from relaton_bib.localized_string import LocalizedString
-from relaton_bib.typed_title_string import TypedTitleString, \
-    TypedTitleStringCollection
-from relaton_bib.technical_committee import TechnicalCommittee
-from relaton_bib.formatted_ref import FormattedRef
-from relaton_bib.medium import Medium
-from relaton_bib.classification import Classification
-from relaton_bib.validity import Validity
-from relaton_bib.bib_item_locality import BibItemLocality, Locality, \
-    BibItemLocalityType, SourceLocalityStack, SourceLocality, LocalityStack
-from relaton_bib.biblio_note import BiblioNote, BiblioNoteCollection
-from relaton_bib.biblio_version import BibliographicItemVersion
-from relaton_bib.place import Place
-from relaton_bib.person import Person, FullName, PersonIdentifier
-from relaton_bib.structured_identifier import StructuredIdentifierCollection
-from relaton_bib.editorial_group import EditorialGroup
-from relaton_bib.ics import ICS
-from relaton_bib.document_relation_collection import DocRelationCollection
-from relaton_bib.document_relation import DocumentRelation
-from relaton_bib.workgroup import WorkGroup
-from relaton_bib.structured_identifier import StructuredIdentifier
+from relaton_bib import BibliographicItem, BibliographicItemType
+from relaton_bib import Address
+from relaton_bib import Contact
+from relaton_bib import Affiliation
+from relaton_bib import TypedUri
+from relaton_bib import DocumentIdentifier, DocumentIdType
+from relaton_bib import CopyrightAssociation
+from relaton_bib import FormattedString, FormattedStringFormat
+from relaton_bib import ContributionInfo, ContributorRole
+from relaton_bib import BibliographicDate, BibliographicDateType
+from relaton_bib import Series, SeriesType
+from relaton_bib import DocumentStatus
+from relaton_bib import Organization, OrgIdentifier
+from relaton_bib import LocalizedString
+from relaton_bib import TypedTitleString, TypedTitleStringCollection
+from relaton_bib import TechnicalCommittee
+from relaton_bib import FormattedRef
+from relaton_bib import Medium
+from relaton_bib import Classification
+from relaton_bib import Validity
+from relaton_bib import BibItemLocality, Locality, BibItemLocalityType, \
+    SourceLocalityStack, SourceLocality, LocalityStack
+from relaton_bib import BiblioNote, BiblioNoteCollection
+from relaton_bib import BibliographicItemVersion
+from relaton_bib import Place
+from relaton_bib import Person, FullName, PersonIdentifier
+from relaton_bib import StructuredIdentifierCollection
+from relaton_bib import EditorialGroup
+from relaton_bib import ICS
+from relaton_bib import DocRelationCollection
+from relaton_bib import DocumentRelation
+from relaton_bib import WorkGroup
+from relaton_bib import StructuredIdentifier
 
 
 @pytest.fixture

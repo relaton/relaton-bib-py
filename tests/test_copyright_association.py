@@ -5,9 +5,7 @@ import pytest
 
 import xml.etree.ElementTree as ET
 
-from relaton_bib.copyright_association import CopyrightAssociation
-from relaton_bib.contribution_info import ContributionInfo
-from relaton_bib.organization import Organization
+from relaton_bib import CopyrightAssociation, ContributionInfo, Organization
 
 
 @pytest.fixture

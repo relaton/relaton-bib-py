@@ -1,5 +1,4 @@
-from relaton_bib.bibliographic_date import BibliographicDate, \
-                                           BibliographicDateType
+from relaton_bib import BibliographicDate, BibliographicDateType
 
 
 def test_nov_2014():

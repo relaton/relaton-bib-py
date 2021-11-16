@@ -4,7 +4,7 @@ import pytest
 
 import xml.etree.ElementTree as ET
 
-from relaton_bib.classification import Classification
+from relaton_bib import Classification
 
 
 @pytest.fixture

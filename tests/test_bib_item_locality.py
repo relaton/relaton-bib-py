@@ -3,7 +3,7 @@ import inspect
 import logging
 import xml.etree.ElementTree as ET
 
-from relaton_bib.bib_item_locality import BibItemLocality, BibItemLocalityType
+from relaton_bib import BibItemLocality, BibItemLocalityType
 
 
 def test_to_xml_all_props():
