@@ -634,3 +634,9 @@ class BibliographicItem:
         if self.type:
             root.attrib["type"] = self.type
         return root
+
+    def to_bibxml(self, parent: ET.Element = None) -> ET.Element:
+        """ Render BibXML (RFC)
+            parent: node where output BibXML will be built
+            return root node of BibXML document"""
+        raise NotImplementedError
