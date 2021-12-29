@@ -98,8 +98,12 @@ class BibliographicDate:
             out.append(f"{pref}date.to:: #{self.to}")
         return "\n".join(out)
 
-    def value(self, prop="on", part=None):
+    def value(self, prop="on", part=None) -> str:
         return self._process_date(getattr(self, prop), part)
+
+    def part(self, part="year") -> str:
+        return self.value("on", part) or self.value("from", part) \
+            or self.value("to", part)
 
     def date_format(self, date, fmt_name=None):
         if fmt_name == "short":

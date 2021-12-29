@@ -20,6 +20,6 @@ def elements_equal(e1: ET.Element, e2: ET.Element, path: list = [], counter: dic
     if len(e1) != len(e2):
         print(f"len({''.join(path)}) {len(e1)} != {len(e2)}")
         return False
-    result =  all(elements_equal(c1, c2, path, dict) for c1, c2 in zip(e1, e2))
+    result = all(elements_equal(c1, c2, path, dict) for c1, c2 in zip(e1, e2))
     path.pop()
     return result

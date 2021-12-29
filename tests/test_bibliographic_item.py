@@ -71,6 +71,9 @@ def subject(title: TypedTitleStringCollection) -> BibliographicItem:
             DocumentIdentifier("urn:iso:std:iso:123:stage-90.93:ed-3:en,fr",
                                "URN"),
             DocumentIdentifier("XYZ"),
+            DocumentIdentifier("10.17487/rfc1149", "DOI"),
+            DocumentIdentifier("draft-ietf-somewg-someprotocol-07",
+                               "Internet-Draft")
         ],
         docnumber="123456",
         edition="1",
@@ -319,6 +322,10 @@ def subject(title: TypedTitleStringCollection) -> BibliographicItem:
                                     language="fr",
                                     script="Latn")])
             ),
+            Series(
+                title=TypedTitleString(content="RFC"),
+                number="4"
+            )
         ],
         medium=Medium(
             form="medium form",
@@ -433,7 +440,8 @@ def test_to_all_parts(subject: BibliographicItem):
         None) == "Geographic information"
     assert len(item.abstract) == 0
     assert next(
-        (d for d in item.docidentifier if re.match(r"-\d", d.id)),
+        (d for d in item.docidentifier
+         if d.type != "Internet-Draft" and re.match(r"-\d", d.id)),
         None) is None
     assert len([d for d in item.docidentifier
                 if "(all parts)" not in d.id]) == 1
@@ -613,6 +621,17 @@ def test_initialise_with_owner_object():
     copy = CopyrightAssociation(owner=owner, from_="2019")
     assert copy.owner == owner
 
+
+def test_iconvert_item_to_BibXML_RFC(subject: BibliographicItem):
+    file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        "examples",
+                        "rfc.xml")
+    tree = ET.parse(file)
+    reference = tree.getroot()
+
+    bibxml = subject.to_bibxml()
+
+    assert elements_equal(reference, bibxml)
 
 # FIXME MOVE TO hash_converter tests
 # RSpec.describe "RelatonBib" => :BibliographicItem do

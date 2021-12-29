@@ -13,9 +13,12 @@ import bibtexparser
 from bibtexparser.bibdatabase import BibDatabase
 from bibtexparser.bwriter import BibTexWriter
 
+from .address import Address
 from .formatted_string import FormattedString
 from .contribution_info import ContributionInfo, \
     ContributorRoleType
+from .contact import Contact
+from .contributor import Contributor
 from .copyright_association import CopyrightAssociation
 from .bibliographic_date import BibliographicDate, BibliographicDateType
 from .series import Series, SeriesType
@@ -25,6 +28,7 @@ from .typed_title_string import TypedTitleString, TypedTitleStringCollection
 from .typed_uri import TypedUri
 from .formatted_ref import FormattedRef
 from .medium import Medium
+from .organization import Organization
 from .classification import Classification
 from .validity import Validity
 from .bib_item_locality import BibItemLocality
@@ -180,60 +184,6 @@ class BibliographicItem:
     def to_xml(self, parent=None, opts={}):
         return self.render_xml(parent, opts)
 
-# FIXME
-#     # @return [Hash]
-#     def to_hash
-#       hash = {}
-#       hash["id"] = id if id
-#       hash["title"] = single_element_array(title) if title&.any?
-#       hash["link"] = single_element_array(link) if link&.any?
-#       hash["type"] = type if type
-#       if docidentifier&.any?
-#         hash["docid"] = single_element_array(docidentifier)
-#       end
-#       hash["docnumber"] = docnumber if docnumber
-#       hash["date"] = single_element_array(date) if date&.any?
-#       if contributor&.any?
-#         hash["contributor"] = single_element_array(contributor)
-#       end
-#       hash["edition"] = edition if edition
-#       hash["version"] = version.to_hash if version
-#       hash["revdate"] = revdate if revdate
-#       if biblionote&.any?
-#         hash["biblionote"] = single_element_array(biblionote)
-#       end
-#       hash["language"] = single_element_array(language) if language&.any?
-#       hash["script"] = single_element_array(script) if script&.any?
-#       hash["formattedref"] = formattedref.to_hash if formattedref
-#       hash["abstract"] = single_element_array(abstract) if abstract&.any?
-#       hash["docstatus"] = status.to_hash if status
-#       hash["copyright"] = single_element_array(copyright) if copyright&.any?
-#       hash["relation"] = single_element_array(relation) if relation&.any?
-#       hash["series"] = single_element_array(series) if series&.any?
-#       hash["medium"] = medium.to_hash if medium
-#       hash["place"] = single_element_array(place) if place&.any?
-#       hash["extent"] = single_element_array(extent) if extent&.any?
-#       if accesslocation&.any?
-#         hash["accesslocation"] = single_element_array(accesslocation)
-#       end
-#       if classification&.any?
-#         hash["classification"] = single_element_array(classification)
-#       end
-#       hash["validity"] = validity.to_hash if validity
-#       hash["fetched"] = fetched.to_s if fetched
-#       hash["keyword"] = single_element_array(keyword) if keyword&.any?
-#       hash["license"] = single_element_array(license) if license&.any?
-#       hash["doctype"] = doctype if doctype
-#       if editorialgroup&.presence?
-#         hash["editorialgroup"] = editorialgroup.to_hash
-#       end
-#       hash["ics"] = single_element_array ics if ics.any?
-#       if structuredidentifier&.presence?
-#         hash["structuredidentifier"] = structuredidentifier.to_hash
-#       end
-#       hash
-#     end
-
     def to_bibtex(self, bibtex: BibDatabase = None) -> str:
         item = {"ENTRYTYPE": self._bibtex_type(), "ID": self.id}
         self._bibtex_title(item)
@@ -300,6 +250,7 @@ class BibliographicItem:
             "doi",
             "file2",
             "month_numeric")
+
         return bibtexparser.dumps(bibtex, writer)
 
     def title_for_lang(self, lang=None):
@@ -639,4 +590,163 @@ class BibliographicItem:
         """ Render BibXML (RFC)
             parent: node where output BibXML will be built
             return root node of BibXML document"""
-        raise NotImplementedError
+        reference = ET.Element("reference") if parent is None \
+            else ET.SubElement(parent, "reference")
+        front = ET.SubElement(reference, "front")
+
+        reference.attrib["anchor"] = self.anchor
+        if any(self.title):
+            first = self.title[0].title.content
+            ET.SubElement(front, "title").text = first
+
+        self.render_seriesinfo(front)
+        self.render_authors(front)
+        self.render_date(front)
+        self.render_workgroup(front)
+        self.render_keyword(front)
+        self.render_abstract(front)
+
+        target = self.bibxml_target
+        if target:
+            reference.attrib["target"] = str(target.content)
+
+        return reference
+
+    @property
+    def bibxml_target(self) -> TypedUri:
+        src_link = None
+        doi_link = None
+        for lnk in self.link:
+            if lnk.type == "src":
+                src_link = lnk
+                break
+            elif lnk.type == "doi":
+                doi_link = lnk
+        return src_link or doi_link
+
+    @property
+    def anchor(self):
+        did = next(
+            (di for di in self.docidentifier if di.type == "rfc-anchor"),
+            None)
+        if did is not None:
+            return did.id
+
+        type = self.docidentifier[0].type
+        return f"{type}.{self.docnumber}"
+
+    def render_keyword(self, parent: ET.Element):
+        for kw in self.keyword:
+            ET.SubElement(parent, "keyword").text = kw.content
+
+    def render_workgroup(self, parent: ET.Element):
+        if self.editorialgroup is not None:
+            if self.editorialgroup.technical_committee is not None:
+                for tc in self.editorialgroup.technical_committee:
+                    ET.SubElement(parent, "workgroup").text = tc.workgroup.name
+
+    def render_abstract(self, parent: ET.Element):
+        if not any(self.abstract):
+            return
+
+        ET.SubElement(parent, "abstract").text = re.sub(
+            r"(<\/?)p(>)", r"\1t\2", self.abstract[0].content)
+
+    def render_date(self, parent: ET.Element):
+        dt = next((d for d in self.date if d.type == "published"), None)
+        if dt is None:
+            return
+
+        elm = ET.SubElement(parent, "date")
+        for part in ["year", "month", "day"]:
+            value = dt.part(part)
+            if value:
+                elm.attrib[part] = month_name(value) if part == "month" \
+                                                     else str(value)
+
+    def render_seriesinfo(self, parent: ET.Element):
+        for di in self.docidentifier:
+            if di.type in ["DOI", "Internet-Draft"]:
+                si = ET.SubElement(parent, "seriesInfo")
+                si.attrib["name"] = di.type
+                si.attrib["value"] = di.id
+
+        snames = [di.type for di in self.docidentifier]
+        for s in self.series:
+            if s.title is None or str(s.title.title) in snames:
+                continue
+            si = ET.SubElement(parent, "seriesInfo")
+            si.attrib["name"] = str(s.title.title)
+            if s.number:
+                si.attrib["value"] = s.number
+
+    def render_authors(self, parent: ET.Element):
+        for c in self.contributor:
+            a = ET.SubElement(parent, "author")
+            is_editor = any(r for r in c.role if r.type == "editor")
+            if is_editor:
+                a.attrib["role"] = "editor"
+
+            if isinstance(c.entity, Person):
+                self.render_person(a, c.entity)
+            else:
+                self.render_organization(a, c.entity)
+
+            self.render_address(a, c)
+
+    def render_address(self, parent: ET.Element, contrib: Contributor):
+        addr = [cn for cn in contrib.entity.contact
+                if not(isinstance(cn, Address) and cn.postcode is None)]
+
+        if any(addr):
+            address = ET.SubElement(parent, "address")
+            addr = next((cn for cn in addr if isinstance(cn, Address)), None)
+            postal = ET.SubElement(address, "postal")
+            if addr.city:
+                ET.SubElement(postal, "city").text = addr.city
+            if addr.postcode:
+                ET.SubElement(postal, "code").text = addr.postcode
+            if addr.country:
+                ET.SubElement(postal, "country").text = addr.country
+            if addr.state:
+                ET.SubElement(postal, "region").text = addr.state
+            if any(addr.street):
+                ET.SubElement(postal, "street").text = addr.street[0]
+
+            self.render_contact(address, contrib.entity.contact)
+
+    def render_contact(self, parent: ET.Element, addr: List[Address]):
+        for t in ["phone", "email", "uri"]:
+            cont = next((cn for cn in addr if isinstance(cn, Contact)
+                         and cn.type == t), None)
+            if cont:
+                ET.SubElement(parent, t).text = cont.value
+
+    def render_person(self, parent: ET.Element, person: Person):
+        if len(person.affiliation) > 0:
+            self.render_organization(parent,
+                                     person.affiliation[0].organization)
+        if person.name.completename is not None:
+            parent.attrib["fullname"] = person.name.completename.content
+
+        if any(person.name.initial):
+            parent.attrib["initials"] = " ".join(
+                [i.content for i in person.name.initial])
+
+        if person.name.surname is not None:
+            parent.attrib["surname"] = person.name.surname.content
+
+    def render_organization(self, parent: ET.Element, org: Organization):
+        o = ET.SubElement(parent, "organization")
+        if len(org.name) > 0:
+            o.text = org.name[0].content
+
+        if org.abbreviation:
+            o.attrib["abbrev"] = org.abbreviation.content
+
+
+def month_name(month_number) -> str:
+    if isinstance(month_number, str):
+        month_number = int(month_number)
+
+    return datetime.date(1900, month_number, 1).strftime('%B')
