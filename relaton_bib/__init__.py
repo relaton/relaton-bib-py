@@ -43,10 +43,12 @@ from .workgroup import WorkGroup
 
 from .bibtex_parser import from_bibtex
 from .xml_parser import from_xml
+from .dict_parser import from_dict
 
 __all__ = [
     from_bibtex,
     from_xml,
+    from_dict,
     BibliographicItem,
     BibliographicItemType,
     Address,

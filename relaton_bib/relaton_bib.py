@@ -2,7 +2,7 @@ import datetime
 import dataclasses
 import re
 
-from typing import TYPE_CHECKING
+from typing import Dict, Union, Type, Callable, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .localized_string import LocalizedString
@@ -61,16 +61,16 @@ def lang_filter(target, opts={}):
     return filtered if filtered else target
 
 
-def to_ds_instance(klass, fail=False):
+def to_ds_instance(target: Union[Type, Callable], fail=False):
     def f(x):
-        if isinstance(x, klass):
+        if isinstance(x, target):
             return x
         elif isinstance(x, dict):
-            return klass(**x)
+            return target(**x)
         elif isinstance(x, str):
-            return klass(x)
+            return target(x)
         elif fail:
-            ValueError(f"Unknown how to conver {type(x).__name__} to {klass}")
+            ValueError(f"Unknown how to conver {type(x).__name__} to {target}")
         else:
             return x
     return f
@@ -89,3 +89,10 @@ def delegate(to, *methods):
             setattr(klass, m, create_delegator(m))
         return klass
     return dec
+
+
+def dict_replace_key(d: Dict, keys_to_replace: Dict) -> Dict:
+    for (old_key, new_key) in keys_to_replace.items():
+        if old_key in d:
+            d[new_key] = d.pop(old_key)
+    return d

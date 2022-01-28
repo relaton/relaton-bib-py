@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List
 
 import xml.etree.ElementTree as ET
@@ -6,9 +6,9 @@ import xml.etree.ElementTree as ET
 
 @dataclass
 class Address:
-    street: List[str]
     city: str
     country: str
+    street: List[str] = field(default_factory=list)
     state: str = None
     postcode: str = None
 

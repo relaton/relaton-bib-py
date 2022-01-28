@@ -12,3 +12,4 @@ pytest==6.2.4
 pytest-mock==3.6.1
 build==0.6.0.post1
 lxml>=4.6.3
+pyyaml==5.3.1
