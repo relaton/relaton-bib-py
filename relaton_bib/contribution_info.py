@@ -20,6 +20,9 @@ class ContributorRoleType(str, Enum):
     ADAPTER = "adapter"
     TRANSLATOR = "translator"
     DISTRIBUTOR = "distributor"
+    INSTITUTION = "institution"
+    ORGANIZATION = "organization"
+    SCHOOL = "school"
 
     @classmethod
     def has_value(cls, value):

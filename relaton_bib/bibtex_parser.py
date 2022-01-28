@@ -10,7 +10,8 @@ from .bibliographic_item import BibliographicItem, BibliographicItemType
 from .bib_item_locality import BibItemLocality
 from .biblio_note import BiblioNote
 from .classification import Classification
-from .contribution_info import ContributionInfo, ContributorRole
+from .contribution_info import ContributionInfo, ContributorRole, \
+                               ContributorRoleType
 from .document_identifier import DocumentIdentifier
 from .document_relation import DocumentRelation
 from .formatted_string import FormattedString
@@ -99,13 +100,16 @@ def _fetch_title(bibtex: dict) -> TypedTitleStringCollection:
 def _fetch_contributor(bibtex: dict) -> List[ContributionInfo]:
     contributor = []
 
-    for key in ["author", "editor"]:
+    for key in [ContributorRoleType.AUTHOR, ContributorRoleType.EDITOR]:
         for entity in _fetch_person(bibtex.get(key)):
             contributor.append(
                 ContributionInfo(entity=entity,
                                  role=[ContributorRole(type=key)]))
 
-    for key in ["publisher", "institution", "organization", "school"]:
+    for key in [ContributorRoleType.PUBLISHER,
+                ContributorRoleType.INSTITUTION,
+                ContributorRoleType.ORGANIZATION,
+                ContributorRoleType.SCHOOL]:
         value = bibtex.get(key)
         if value:
             is_publisher = key == "publisher"
