@@ -7,11 +7,10 @@ from .address import Address
 from .affiliation import Affiliation
 from .biblio_version import BibliographicItemVersion
 from .bibliographic_date import BibliographicDate, BibliographicDateType
-from .bibliographic_item import BibliographicItem, BibliographicItemType
+from .bibliographic_item import BibliographicItem
 from .biblio_note import BiblioNoteCollection, BiblioNote
 from .bib_item_locality import Locality, BibItemLocality, LocalityStack, \
     SourceLocalityStack, SourceLocality
-from .biblio_note import BiblioNote
 from .contact import Contact, ContactType
 from .classification import Classification
 from .contribution_info import ContributionInfo, ContributorRole
@@ -26,7 +25,7 @@ from .ics import ICS
 from .localized_string import LocalizedString
 from .person import Person, FullName, PersonIdentifier
 from .place import Place
-from .series import Series, SeriesType
+from .series import Series
 from .structured_identifier import StructuredIdentifier, \
     StructuredIdentifierCollection
 from .technical_committee import TechnicalCommittee
