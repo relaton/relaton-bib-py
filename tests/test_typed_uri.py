@@ -43,16 +43,13 @@ def test_hash(subject):
     assert result["content"] == "https://metanorma.com"
 
 
-@pytest.mark.skip(reason="FIXME not implemented yet")
 def test_invalid_uri():
     with pytest.raises(ValueError) as excinfo:
         TypedUri(type="type", content=":some_malformed_uri//")
-    assert "FIXME" \
-        in str(excinfo.value)
+    assert "Invalid content" in str(excinfo.value)
 
 
 def test_set_content():
     uri = TypedUri(type="src", content=None)
     uri.content = "http://example.com"
-    # expect(uri.content).to be_instance_of Addressable::URI FIXME
     assert uri.content == "http://example.com"
